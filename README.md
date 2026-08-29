@@ -160,7 +160,7 @@ O sistema deve ser compatível com versões atuais dos principais navegadores:
 - Microsoft Edge
 - Safari
 
-## 6. Requisitos Técnicos
+## Requisitos Técnicos
 
 O sistema será desenvolvido utilizando as seguintes tecnologias:
 
