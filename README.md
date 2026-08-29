@@ -159,3 +159,12 @@ O sistema deve ser compatível com versões atuais dos principais navegadores:
 - Mozilla Firefox
 - Microsoft Edge
 - Safari
+
+## 6. Requisitos Técnicos
+
+O sistema será desenvolvido utilizando as seguintes tecnologias:
+
+- **PHP:** utilizado no desenvolvimento da aplicação e das regras de negócio.
+- **MySQL:** utilizado para armazenar e organizar os dados do sistema.
+
+Essas tecnologias foram escolhidas por serem amplamente utilizadas no desenvolvimento web, possuírem boa integração entre si e oferecerem estabilidade e facilidade de manutenção.
