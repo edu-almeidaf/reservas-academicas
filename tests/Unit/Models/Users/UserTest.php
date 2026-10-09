@@ -233,4 +233,23 @@ class UserTest extends TestCase
         $this->assertTrue($this->user->authenticate('123456'));
         $this->assertFalse($this->user->authenticate('654321'));
     }
+
+    public function test_is_valid_for_signup_only_for_student_and_teacher(): void
+    {
+        $expectations = [User::PROFILE_STUDENT => true, User::PROFILE_TEACHER => true, User::PROFILE_ADMIN => false];
+
+        foreach ($expectations as $profile => $expected) {
+            $user = new User([
+                'profile' => $profile,
+                'name' => 'User 3',
+                'email' => 'fulano3@example.com',
+                'password' => '123456',
+                'password_confirmation' => '123456'
+            ]);
+
+            $this->assertSame($expected, $user->isValidForSignup(), $profile);
+        }
+
+        $this->assertEquals('não é um valor válido!', $user->errors('profile'));
+    }
 }

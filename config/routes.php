@@ -5,6 +5,7 @@ use App\Controllers\AuthenticationsController;
 use App\Controllers\HomeController;
 use App\Controllers\StudentController;
 use App\Controllers\TeacherController;
+use App\Controllers\UsersController;
 use Core\Router\Route;
 
 // Authentication
@@ -12,6 +13,10 @@ Route::get('/', [HomeController::class, 'index'])->name('root');
 
 Route::get('/login', [AuthenticationsController::class, 'new'])->name('users.login');
 Route::post('/login', [AuthenticationsController::class, 'authenticate'])->name('users.authenticate');
+
+// Signup
+Route::get('/signup', [UsersController::class, 'new'])->name('users.new');
+Route::post('/signup', [UsersController::class, 'create'])->name('users.create');
 
 Route::middleware('auth')->group(function () {
     // Logout
