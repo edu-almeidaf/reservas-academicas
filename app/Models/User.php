@@ -7,15 +7,15 @@ use Core\Database\ActiveRecord\Model;
 
 /**
  * @property int $id
+ * @property string $profile
  * @property string $name
  * @property string $email
- * @property string $encrypted_password
- * @property string $avatar_name
+ * @property string $password_hash
  */
 class User extends Model
 {
     protected static string $table = 'users';
-    protected static array $columns = ['name', 'email', 'encrypted_password', 'avatar_name'];
+    protected static array $columns = ['profile', 'name', 'email', 'password_hash'];
 
     protected ?string $password = null;
     protected ?string $password_confirmation = null;
@@ -34,11 +34,11 @@ class User extends Model
 
     public function authenticate(string $password): bool
     {
-        if ($this->encrypted_password == null) {
+        if ($this->password_hash == null) {
             return false;
         }
 
-        return password_verify($password, $this->encrypted_password);
+        return password_verify($password, $this->password_hash);
     }
 
     public static function findByEmail(string $email): User | null
@@ -55,7 +55,7 @@ class User extends Model
             $this->newRecord() &&
             $value !== null && $value !== ''
         ) {
-            $this->encrypted_password = password_hash($value, PASSWORD_DEFAULT);
+            $this->password_hash = password_hash($value, PASSWORD_DEFAULT);
         }
     }
 }
