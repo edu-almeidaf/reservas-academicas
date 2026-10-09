@@ -15,6 +15,7 @@ class UserTest extends TestCase
         parent::setUp();
 
         $this->user = new User([
+            'profile' => 'discente',
             'name' => 'User 1',
             'email' => 'fulano@example.com',
             'password' => '123456',
@@ -23,6 +24,7 @@ class UserTest extends TestCase
         $this->user->save();
 
         $this->user2 = new User([
+            'profile' => 'discente',
             'name' => 'User 2',
             'email' => 'fulano1@example.com',
             'password' => '123456',
@@ -88,6 +90,7 @@ class UserTest extends TestCase
     public function test_errors_should_return_password_confirmation_error(): void
     {
         $user = new User([
+            'profile' => 'discente',
             'name' => 'User 3',
             'email' => 'fulano3@example.com',
             'password' => '123456',
