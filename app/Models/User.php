@@ -53,6 +53,18 @@ class User extends Model
         }
     }
 
+    public function isValidForSignup(): bool
+    {
+        $valid = $this->isValid();
+
+        if (!in_array($this->profile, self::SIGNUP_PROFILES, true)) {
+            $this->addError('profile', 'não é um valor válido!');
+            return false;
+        }
+
+        return $valid;
+    }
+
     public function isStudent(): bool
     {
         return $this->hasProfile(self::PROFILE_STUDENT);
