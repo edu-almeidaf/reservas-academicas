@@ -14,6 +14,24 @@ use Core\Database\ActiveRecord\Model;
  */
 class User extends Model
 {
+    public const PROFILE_STUDENT = 'discente';
+    public const PROFILE_TEACHER = 'docente';
+    public const PROFILE_ADMIN = 'tecnico';
+    public const PROFILES = [self::PROFILE_STUDENT, self::PROFILE_TEACHER, self::PROFILE_ADMIN];
+    public const SIGNUP_PROFILES = [self::PROFILE_STUDENT, self::PROFILE_TEACHER];
+
+    private const HOME_ROUTES = [
+        self::PROFILE_STUDENT => 'student.home',
+        self::PROFILE_TEACHER => 'teacher.home',
+        self::PROFILE_ADMIN => 'admin.home',
+    ];
+
+    private const LABELS = [
+        self::PROFILE_STUDENT => 'Discente',
+        self::PROFILE_TEACHER => 'Docente',
+        self::PROFILE_ADMIN => 'Técnico (admin)',
+    ];
+
     protected static string $table = 'users';
     protected static array $columns = ['profile', 'name', 'email', 'password_hash'];
 
@@ -24,12 +42,45 @@ class User extends Model
     {
         Validations::notEmpty('name', $this);
         Validations::notEmpty('email', $this);
+        Validations::email('email', $this);
 
         Validations::uniqueness('email', $this);
+        Validations::inclusion('profile', self::PROFILES, $this);
 
         if ($this->newRecord()) {
+            Validations::notEmpty('password', $this);
             Validations::passwordConfirmation($this);
         }
+    }
+
+    public function isStudent(): bool
+    {
+        return $this->hasProfile(self::PROFILE_STUDENT);
+    }
+
+    public function isTeacher(): bool
+    {
+        return $this->hasProfile(self::PROFILE_TEACHER);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasProfile(self::PROFILE_ADMIN);
+    }
+
+    public function hasProfile(string ...$profiles): bool
+    {
+        return in_array($this->profile, $profiles, true);
+    }
+
+    public function homeRouteName(): string
+    {
+        return self::HOME_ROUTES[$this->profile];
+    }
+
+    public function profileLabel(): string
+    {
+        return self::LABELS[$this->profile];
     }
 
     public function authenticate(string $password): bool
