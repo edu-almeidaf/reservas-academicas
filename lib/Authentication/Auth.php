@@ -6,8 +6,9 @@ use App\Models\User;
 
 class Auth
 {
-    public static function login($user): void
+    public static function login(User $user): void
     {
+        self::regenerateSession();
         $_SESSION['user']['id'] = $user->id;
     }
 
@@ -29,5 +30,13 @@ class Auth
     public static function logout(): void
     {
         unset($_SESSION['user']['id']);
+        self::regenerateSession();
+    }
+
+    private static function regenerateSession(): void
+    {
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_regenerate_id(true);
+        }
     }
 }

@@ -22,7 +22,6 @@ class LoginHelper extends Module
     {
         /** @var \Tests\Support\AcceptanceTester $page */
         $page = $this->getModule('WebDriver');
-        $page->click('fulano@example.com');
         $page->click('Sair');
     }
 }
