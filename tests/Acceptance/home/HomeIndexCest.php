@@ -7,9 +7,10 @@ use Tests\Support\AcceptanceTester;
 
 class HomeIndexCest extends BaseAcceptanceCest
 {
-    public function seeHomePage(AcceptanceTester $page): void
+    public function redirectToLoginIfNotAuthenticated(AcceptanceTester $page): void
     {
         $page->amOnPage('/');
-        $page->see('Home Page', '//h1');
+        $page->seeInCurrentUrl('/login');
+        $page->see('Login', '//h4');
     }
 }
