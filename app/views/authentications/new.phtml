@@ -1,0 +1,16 @@
+<form action="<?= route('users.authenticate') ?>" method="POST">
+    <div class="form-group mb-3">
+        <label for="user_email" class="form-label">Email</label>
+        <input id="user_email" type="email" name="user[email]" class="form-control" placeholder="Enter email">
+    </div>
+    <div class="form-group mb-3">
+        <label for="user_password" class="form-label">Senha</label>
+        <input id="user_password" type="password" name="user[password]" class="form-control" placeholder="Password">
+    </div>
+    <div class="d-grid">
+        <input type="submit" class="btn btn-primary btn-block" value="Entrar">
+    </div>
+</form>
+<p class="text-center mt-3 mb-0">
+    <a href="<?= route('users.new') ?>">Criar conta</a>
+</p>

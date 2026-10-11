@@ -8,7 +8,11 @@ class HomeController extends Controller
 {
     public function index(): void
     {
-        $title = 'Home Page';
-        $this->render('home/index', compact('title'));
+        if ($this->current_user === null) {
+            $this->redirectTo(route('users.login'));
+            return;
+        }
+
+        $this->redirectTo(route($this->current_user->homeRouteName()));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Lib;
 
+use Core\Database\ActiveRecord\Model;
 use Core\Database\Database;
 
 class Validations
@@ -20,6 +21,35 @@ class Validations
     {
         if ($obj->password !== $obj->password_confirmation) {
             $obj->addError('password', 'as senhas devem ser idênticas!');
+            return false;
+        }
+
+        return true;
+    }
+
+    public static function email(string $attribute, Model $obj): bool
+    {
+        $value = $obj->$attribute;
+
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
+            $obj->addError($attribute, 'não é um e-mail válido!');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @param array<int, mixed> $values
+     */
+    public static function inclusion(string $attribute, array $values, Model $obj): bool
+    {
+        if (!in_array($obj->$attribute, $values, true)) {
+            $obj->addError($attribute, 'não é um valor válido!');
             return false;
         }
 

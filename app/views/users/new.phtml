@@ -1,0 +1,47 @@
+<?php $profileLabels = [App\Models\User::PROFILE_STUDENT => 'Discente', App\Models\User::PROFILE_TEACHER => 'Docente']; ?>
+<form action="<?= route('users.create') ?>" method="POST" novalidate>
+    <div class="form-group mb-3">
+        <label for="user_name" class="form-label">Nome</label>
+        <input id="user_name" type="text" name="user[name]" value="<?= htmlspecialchars($user->name ?? '') ?>"
+            class="form-control <?= $user->errors('name') ? 'is-invalid' : '' ?>" required>
+        <div class="invalid-feedback"><?= $user->errors('name') ?></div>
+    </div>
+    <div class="form-group mb-3">
+        <label for="user_email" class="form-label">Email</label>
+        <input id="user_email" type="email" name="user[email]" value="<?= htmlspecialchars($user->email ?? '') ?>"
+            class="form-control <?= $user->errors('email') ? 'is-invalid' : '' ?>" required>
+        <div class="invalid-feedback"><?= $user->errors('email') ?></div>
+    </div>
+    <div class="form-group mb-3">
+        <span class="form-label d-block">Perfil</span>
+        <?php foreach ($profileLabels as $profile => $label) : ?>
+            <div class="form-check form-check-inline">
+                <input id="user_profile_<?= $profile ?>" type="radio" name="user[profile]" value="<?= $profile ?>"
+                    class="form-check-input <?= $user->errors('profile') ? 'is-invalid' : '' ?>"
+                    <?= $user->profile === $profile ? 'checked' : '' ?> required>
+                <label for="user_profile_<?= $profile ?>" class="form-check-label"><?= $label ?></label>
+            </div>
+        <?php endforeach; ?>
+        <?php if ($user->errors('profile')) : ?>
+            <div class="invalid-feedback d-block"><?= $user->errors('profile') ?></div>
+        <?php endif; ?>
+    </div>
+    <div class="form-group mb-3">
+        <label for="user_password" class="form-label">Senha</label>
+        <input id="user_password" type="password" name="user[password]"
+            class="form-control <?= $user->errors('password') ? 'is-invalid' : '' ?>" required>
+        <div class="invalid-feedback"><?= $user->errors('password') ?></div>
+    </div>
+    <div class="form-group mb-3">
+        <label for="user_password_confirmation" class="form-label">Confirmação de senha</label>
+        <input id="user_password_confirmation" type="password" name="user[password_confirmation]"
+            class="form-control" required>
+    </div>
+    <div class="d-grid">
+        <input type="submit" class="btn btn-primary btn-block" value="Cadastrar">
+    </div>
+</form>
+
+<p class="text-center mt-3 mb-0">
+    <a href="<?= route('users.login') ?>">Já tenho conta</a>
+</p>
