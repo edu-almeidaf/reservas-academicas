@@ -93,6 +93,35 @@ class AuthenticationsControllerTest extends ControllerTestCase
         $this->assertEquals('Email e/ou senha inválidos!', $_SESSION['flash']['danger']);
     }
 
+    /**
+     * @return array<string, array{0: mixed}>
+     */
+    public static function malformedCredentialsProvider(): array
+    {
+        return [
+            'user is not an array' => ['fulano@example.com'],
+            'missing password' => [['email' => 'fulano@example.com']],
+            'empty email' => [['email' => '', 'password' => '123456']],
+            'empty password' => [['email' => 'fulano@example.com', 'password' => '']],
+            'non-string email' => [['email' => ['fulano@example.com'], 'password' => '123456']],
+            'non-string password' => [['email' => 'fulano@example.com', 'password' => ['123456']]],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('malformedCredentialsProvider')]
+    public function test_unsuccessfully_authenticate_with_malformed_credentials(mixed $user): void
+    {
+        $response = $this->post(
+            action: 'authenticate',
+            controllerName: 'App\Controllers\AuthenticationsController',
+            params: ['user' => $user]
+        );
+
+        $this->assertEquals('Location: /login', $response);
+        $this->assertFalse(isset($_SESSION['user']['id']));
+        $this->assertEquals('Email e/ou senha inválidos!', $_SESSION['flash']['danger']);
+    }
+
     public function test_logout(): void
     {
         $_SESSION['user']['id'] = $this->user->id;

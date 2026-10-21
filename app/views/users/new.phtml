@@ -1,4 +1,3 @@
-<?php $profileLabels = [App\Models\User::PROFILE_STUDENT => 'Discente', App\Models\User::PROFILE_TEACHER => 'Docente']; ?>
 <form action="<?= route('users.create') ?>" method="POST" novalidate>
     <div class="form-group mb-3">
         <label for="user_name" class="form-label">Nome</label>
@@ -14,7 +13,7 @@
     </div>
     <div class="form-group mb-3">
         <span class="form-label d-block">Perfil</span>
-        <?php foreach ($profileLabels as $profile => $label) : ?>
+        <?php foreach ($profileOptions as $profile => $label) : ?>
             <div class="form-check form-check-inline">
                 <input id="user_profile_<?= $profile ?>" type="radio" name="user[profile]" value="<?= $profile ?>"
                     class="form-check-input <?= $user->errors('profile') ? 'is-invalid' : '' ?>"

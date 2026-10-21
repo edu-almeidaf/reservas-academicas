@@ -42,6 +42,8 @@ class UsersControllerTest extends ControllerTestCase
         $this->assertMatchesRegularExpression('/name="user\[email\]"/', $response);
         $this->assertMatchesRegularExpression('/name="user\[profile\]" value="discente"/', $response);
         $this->assertMatchesRegularExpression('/name="user\[profile\]" value="docente"/', $response);
+        $this->assertMatchesRegularExpression('/user_profile_discente" class="form-check-label">Discente</', $response);
+        $this->assertMatchesRegularExpression('/user_profile_docente" class="form-check-label">Docente</', $response);
         $this->assertDoesNotMatchRegularExpression('/value="tecnico"/', $response);
         $this->assertMatchesRegularExpression('/name="user\[password\]"/', $response);
         $this->assertMatchesRegularExpression('/name="user\[password_confirmation\]"/', $response);
@@ -86,6 +88,43 @@ class UsersControllerTest extends ControllerTestCase
 
         $this->assertStringContainsString('Existem dados incorretos! Por favor, verifique!', $response);
         $this->assertStringContainsString('não pode ser vazio!', $response);
+        $this->assertCount(0, User::all());
+    }
+
+    public function test_unsuccessfully_create_user_with_missing_field(): void
+    {
+        $params = $this->userParams();
+        unset($params['user']['email']);
+
+        $response = $this->post(action: 'create', controllerName: 'App\Controllers\UsersController', params: $params);
+
+        $this->assertStringContainsString('Existem dados incorretos! Por favor, verifique!', $response);
+        $this->assertMatchesRegularExpression('/name="user\[email\]" value=""[^>]*is-invalid/', $response);
+        $this->assertCount(0, User::all());
+    }
+
+    public function test_unsuccessfully_create_user_with_non_string_field(): void
+    {
+        $response = $this->post(
+            action: 'create',
+            controllerName: 'App\Controllers\UsersController',
+            params: $this->userParams(['name' => ['Fulano']])
+        );
+
+        $this->assertStringContainsString('Existem dados incorretos! Por favor, verifique!', $response);
+        $this->assertMatchesRegularExpression('/name="user\[name\]" value=""[^>]*is-invalid/', $response);
+        $this->assertCount(0, User::all());
+    }
+
+    public function test_unsuccessfully_create_user_with_malformed_payload(): void
+    {
+        $response = $this->post(
+            action: 'create',
+            controllerName: 'App\Controllers\UsersController',
+            params: ['user' => 'fulano']
+        );
+
+        $this->assertStringContainsString('Existem dados incorretos! Por favor, verifique!', $response);
         $this->assertCount(0, User::all());
     }
 
