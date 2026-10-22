@@ -87,6 +87,14 @@ class AreasAccessTest extends TestCase
             'cookies' => $cookieJar
         ]);
 
+        $codePage = (string) $this->client->get('/login/code', ['cookies' => $cookieJar])->getBody();
+        preg_match('/Código de verificação enviado: (\d{8})/', $codePage, $matches);
+
+        $this->client->post('/login/code', [
+            'form_params' => ['code' => $matches[1]],
+            'cookies' => $cookieJar
+        ]);
+
         return $cookieJar;
     }
 }

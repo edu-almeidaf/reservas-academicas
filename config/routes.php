@@ -14,6 +14,9 @@ Route::get('/', [HomeController::class, 'index'])->name('root');
 Route::get('/login', [AuthenticationsController::class, 'new'])->name('users.login');
 Route::post('/login', [AuthenticationsController::class, 'authenticate'])->name('users.authenticate');
 
+Route::get('/login/code', [AuthenticationsController::class, 'code'])->name('users.code');
+Route::post('/login/code', [AuthenticationsController::class, 'verifyCode'])->name('users.verify_code');
+
 // Signup
 Route::get('/signup', [UsersController::class, 'new'])->name('users.new');
 Route::post('/signup', [UsersController::class, 'create'])->name('users.create');

@@ -23,13 +23,41 @@ class AuthenticationsController extends Controller
         $user = User::findByEmail($params['email'] ?? '');
 
         if ($user && $user->authenticate($params['password'] ?? '')) {
+            $code = Auth::startCodeVerification($user);
+
+            FlashMessage::success("Código de verificação enviado: {$code}");
+            $this->redirectTo(route('users.code'));
+        } else {
+            FlashMessage::danger('Email e/ou senha inválidos!');
+            $this->redirectTo(route('users.login'));
+        }
+    }
+
+    public function code(): void
+    {
+        if (!Auth::hasPendingCode()) {
+            $this->redirectTo(route('users.login'));
+            return;
+        }
+
+        $title = 'Código de verificação';
+        $this->render('authentications/code', compact('title'));
+    }
+
+    public function verifyCode(Request $request): void
+    {
+        $code = $request->getParam('code');
+        $isValidFormat = is_string($code) && ctype_digit($code) && strlen($code) === Auth::CODE_LENGTH;
+        $user = $isValidFormat ? Auth::verifyCode($code) : null;
+
+        if ($user) {
             Auth::login($user);
 
             FlashMessage::success('Login realizado com sucesso!');
             $this->redirectTo(route('root'));
         } else {
-            FlashMessage::danger('Email e/ou senha inválidos!');
-            $this->redirectTo(route('users.login'));
+            FlashMessage::danger('Código de verificação inválido!');
+            $this->redirectTo(route('users.code'));
         }
     }
 

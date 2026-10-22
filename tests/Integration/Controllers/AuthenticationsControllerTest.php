@@ -3,6 +3,7 @@
 namespace Tests\Integration\Controllers;
 
 use App\Models\User;
+use Lib\Authentication\Auth;
 
 class AuthenticationsControllerTest extends ControllerTestCase
 {
@@ -11,7 +12,7 @@ class AuthenticationsControllerTest extends ControllerTestCase
     public function setUp(): void
     {
         parent::setUp();
-        unset($_SESSION['flash']);
+        unset($_SESSION['flash'], $_SESSION['login_code']);
 
         $this->user = new User([
             'profile' => User::PROFILE_STUDENT,
@@ -25,7 +26,7 @@ class AuthenticationsControllerTest extends ControllerTestCase
 
     public function tearDown(): void
     {
-        unset($_SESSION['flash']);
+        unset($_SESSION['flash'], $_SESSION['login_code']);
         parent::tearDown();
     }
 
@@ -50,9 +51,81 @@ class AuthenticationsControllerTest extends ControllerTestCase
             params: ['user' => ['email' => 'fulano@example.com', 'password' => '123456']]
         );
 
+        $this->assertEquals('Location: /login/code', $response);
+        $this->assertFalse(isset($_SESSION['user']['id']));
+        $this->assertEquals($this->user->id, $_SESSION['login_code']['user_id']);
+        $this->assertMatchesRegularExpression('/^\d{8}$/', $_SESSION['login_code']['code']);
+        $this->assertEquals(
+            "Código de verificação enviado: {$_SESSION['login_code']['code']}",
+            $_SESSION['flash']['success']
+        );
+    }
+
+    public function test_render_code_page_with_pending_code(): void
+    {
+        Auth::startCodeVerification($this->user);
+
+        $response = $this->get(action: 'code', controllerName: 'App\Controllers\AuthenticationsController');
+
+        $this->assertMatchesRegularExpression('/<form action="\/login\/code" method="POST">/', $response);
+        $this->assertMatchesRegularExpression('/name="code"/', $response);
+        $this->assertMatchesRegularExpression('/value="Verificar"/', $response);
+    }
+
+    public function test_code_page_without_pending_code_redirects_to_login(): void
+    {
+        $response = $this->get(action: 'code', controllerName: 'App\Controllers\AuthenticationsController');
+
+        $this->assertEquals('Location: /login', $response);
+    }
+
+    public function test_successfully_verify_code(): void
+    {
+        $code = Auth::startCodeVerification($this->user);
+
+        $response = $this->post(
+            action: 'verifyCode',
+            controllerName: 'App\Controllers\AuthenticationsController',
+            params: ['code' => $code]
+        );
+
         $this->assertEquals('Location: /', $response);
         $this->assertEquals($this->user->id, $_SESSION['user']['id']);
+        $this->assertFalse(isset($_SESSION['login_code']));
         $this->assertEquals('Login realizado com sucesso!', $_SESSION['flash']['success']);
+    }
+
+    /**
+     * @return array<string, array{0: mixed}>
+     */
+    public static function invalidCodeProvider(): array
+    {
+        return [
+            'wrong code' => ['wrong'],
+            'too short' => ['1234567'],
+            'not a number' => ['abcdefgh'],
+            'not a string' => [['12345678']],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidCodeProvider')]
+    public function test_unsuccessfully_verify_code(mixed $code): void
+    {
+        $validCode = Auth::startCodeVerification($this->user);
+        if ($code === 'wrong') {
+            $code = str_pad((string) (((int) $validCode + 1) % 100000000), 8, '0', STR_PAD_LEFT);
+        }
+
+        $response = $this->post(
+            action: 'verifyCode',
+            controllerName: 'App\Controllers\AuthenticationsController',
+            params: ['code' => $code]
+        );
+
+        $this->assertEquals('Location: /login/code', $response);
+        $this->assertFalse(isset($_SESSION['user']['id']));
+        $this->assertTrue(Auth::hasPendingCode());
+        $this->assertEquals('Código de verificação inválido!', $_SESSION['flash']['danger']);
     }
 
     public function test_unsuccessfully_authenticate_with_wrong_password(): void

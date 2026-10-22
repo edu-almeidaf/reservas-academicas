@@ -16,6 +16,12 @@ class LoginHelper extends Module
         $page->fillField('user[email]', $username);
         $page->fillField('user[password]', $password);
         $page->click('Entrar');
+
+        if (str_starts_with($page->grabFromCurrentUrl(), '/login/code')) {
+            preg_match('/\d{8}/', $page->grabTextFrom('.alert-success'), $matches);
+            $page->fillField('code', $matches[0]);
+            $page->click('Verificar');
+        }
     }
 
     public function logout(): void

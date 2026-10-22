@@ -1,0 +1,13 @@
+<form action="<?= route('users.verify_code') ?>" method="POST">
+    <div class="form-group mb-3">
+        <label for="code" class="form-label">Código de verificação</label>
+        <input id="code" type="text" name="code" class="form-control" inputmode="numeric" autocomplete="one-time-code"
+            maxlength="<?= Lib\Authentication\Auth::CODE_LENGTH ?>" placeholder="00000000">
+    </div>
+    <div class="d-grid">
+        <input type="submit" class="btn btn-primary btn-block" value="Verificar">
+    </div>
+</form>
+<p class="text-center mt-3 mb-0">
+    <a href="<?= route('users.login') ?>">Voltar para o login</a>
+</p>

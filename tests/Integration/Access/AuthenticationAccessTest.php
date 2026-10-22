@@ -33,4 +33,12 @@ class AuthenticationAccessTest extends TestCase
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('/login', $response->getHeaderLine('Location'));
     }
+
+    public function test_should_not_access_the_code_route_without_login(): void
+    {
+        $response = $this->client->get('/login/code');
+
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('/login', $response->getHeaderLine('Location'));
+    }
 }
