@@ -20,6 +20,7 @@
 
             <?php if ($this->current_user) : ?>
                 <div class="d-flex align-items-center gap-3">
+                    <a class="nav-link" href="<?= route('reservations.index') ?>">Minhas Reservas</a>
                     <span class="navbar-text">
                         <?= htmlspecialchars($this->current_user->name) ?> · <?= $this->current_user->profileLabel() ?>
                     </span>
