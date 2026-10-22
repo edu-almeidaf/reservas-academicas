@@ -1,0 +1,33 @@
+<?php if (empty($reservations)) : ?>
+    <p>Você ainda não tem reservas.</p>
+<?php else : ?>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Recurso</th>
+                <th>Data</th>
+                <th>Horário</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($reservations as $reservation) : ?>
+                <?php $schedule = $schedules[$reservation->id] ?? null; ?>
+                <tr>
+                    <td><?= $reservation->id ?></td>
+                    <td><?= htmlspecialchars($resources[$reservation->resource_id] ?? '') ?></td>
+                    <td><?= $schedule ? date('d/m/Y', strtotime($schedule->scheduled_date)) : '' ?></td>
+                    <td>
+                        <?= $schedule ? substr($schedule->start_time, 0, 5) . ' - ' . substr($schedule->end_time, 0, 5) : '' ?>
+                    </td>
+                    <td><?= $reservation->statusLabel() ?></td>
+                    <td></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <?php $paginator->renderPagesNavigation(); ?>
+<?php endif; ?>

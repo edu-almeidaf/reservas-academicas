@@ -3,6 +3,7 @@
 use App\Controllers\AdminController;
 use App\Controllers\AuthenticationsController;
 use App\Controllers\HomeController;
+use App\Controllers\ReservationsController;
 use App\Controllers\StudentController;
 use App\Controllers\TeacherController;
 use App\Controllers\UsersController;
@@ -21,6 +22,10 @@ Route::post('/signup', [UsersController::class, 'create'])->name('users.create')
 Route::middleware('auth')->group(function () {
     // Logout
     Route::post('/logout', [AuthenticationsController::class, 'destroy'])->name('users.logout');
+
+    // Reservations
+    Route::get('/reservations', [ReservationsController::class, 'index'])->name('reservations.index');
+    Route::get('/reservations/page/{page}', [ReservationsController::class, 'index'])->name('reservations.paginate');
 });
 
 // Areas
