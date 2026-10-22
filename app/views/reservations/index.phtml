@@ -16,7 +16,9 @@
             <?php foreach ($reservations as $reservation) : ?>
                 <?php $schedule = $schedules[$reservation->id] ?? null; ?>
                 <tr>
-                    <td><?= $reservation->id ?></td>
+                    <td>
+                        <a href="<?= route('reservations.show', ['id' => $reservation->id]) ?>">#<?= $reservation->id ?></a>
+                    </td>
                     <td><?= htmlspecialchars($resources[$reservation->resource_id] ?? '') ?></td>
                     <td><?= $schedule ? date('d/m/Y', strtotime($schedule->scheduled_date)) : '' ?></td>
                     <td>
