@@ -41,8 +41,8 @@ class ReservationsControllerTest extends ControllerTestCase
         $response = $this->get(action: 'index', controllerName: 'App\Controllers\ReservationsController');
 
         $this->assertMatchesRegularExpression('/<h1>\s*Minhas Reservas\s*<\/h1>/', $response);
-        $this->assertStringContainsString("<td>{$reservation->id}</td>", $response);
-        $this->assertStringNotContainsString("<td>{$other->id}</td>", $response);
+        $this->assertStringContainsString("href=\"/reservations/{$reservation->id}\">#{$reservation->id}</a>", $response);
+        $this->assertStringNotContainsString("href=\"/reservations/{$other->id}\"", $response);
         $this->assertStringContainsString($this->resource->name, $response);
         $this->assertStringContainsString(date('d/m/Y', strtotime($this->futureDate(1))), $response);
         $this->assertStringContainsString('08:00 - 10:00', $response);
@@ -99,6 +99,59 @@ class ReservationsControllerTest extends ControllerTestCase
         } catch (HTTPException $e) {
             $this->assertEquals(404, $e->getStatusCode());
             $this->assertEquals('Página não encontrada', $e->getMessage());
+        }
+    }
+
+    public function test_show_reservation(): void
+    {
+        $reservation = $this->createReservation(1);
+
+        $response = $this->get(
+            action: 'show',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id]
+        );
+
+        $this->assertMatchesRegularExpression("/<h1>\s*Reserva #{$reservation->id}\s*<\/h1>/", $response);
+        $this->assertStringContainsString($this->resource->name, $response);
+        $this->assertStringContainsString($this->reservationCategory->name, $response);
+        $this->assertStringContainsString(date('d/m/Y', strtotime($this->futureDate(1))), $response);
+        $this->assertStringContainsString('08:00 - 10:00', $response);
+        $this->assertStringContainsString('Aula de Banco de Dados', $response);
+        $this->assertStringContainsString('Pendente', $response);
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function notFoundReservationProvider(): array
+    {
+        return [
+            'nonexistent' => ['999'],
+            'not a number' => ['abc'],
+            'from another user' => ['other'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('notFoundReservationProvider')]
+    public function test_show_reservation_not_found(string $id): void
+    {
+        if ($id === 'other') {
+            $other = $this->newReservation(['user_id' => $this->createUser('outro@example.com')->id]);
+            $other->save();
+            $id = (string) $other->id;
+        }
+
+        try {
+            $this->get(
+                action: 'show',
+                controllerName: 'App\Controllers\ReservationsController',
+                params: ['id' => $id]
+            );
+            $this->fail('Expected HTTPException');
+        } catch (HTTPException $e) {
+            $this->assertEquals(404, $e->getStatusCode());
+            $this->assertEquals('Reserva não encontrada', $e->getMessage());
         }
     }
 }

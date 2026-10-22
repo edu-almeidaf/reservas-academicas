@@ -26,6 +26,7 @@ Route::middleware('auth')->group(function () {
     // Reservations
     Route::get('/reservations', [ReservationsController::class, 'index'])->name('reservations.index');
     Route::get('/reservations/page/{page}', [ReservationsController::class, 'index'])->name('reservations.paginate');
+    Route::get('/reservations/{id}', [ReservationsController::class, 'show'])->name('reservations.show');
 });
 
 // Areas

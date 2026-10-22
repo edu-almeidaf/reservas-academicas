@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Models\Reservation;
 use App\Models\ReservationSchedule;
 use App\Models\Resource;
 use Core\Exceptions\HTTPException;
@@ -27,6 +28,30 @@ class ReservationsController extends Controller
 
         $title = 'Minhas Reservas';
         $this->render('reservations/index', compact('paginator', 'reservations', 'schedules', 'resources', 'title'));
+    }
+
+    public function show(Request $request): void
+    {
+        $reservation = $this->findReservation($request);
+
+        $title = "Reserva #{$reservation->id}";
+        $this->render('reservations/show', compact('reservation', 'title'));
+    }
+
+    private function findReservation(Request $request): Reservation
+    {
+        $id = $request->getParam('id');
+        $reservation = is_string($id) && ctype_digit($id)
+            ? $this->current_user->reservations()->findById((int) $id)
+            : null;
+
+        if (!$reservation instanceof Reservation) {
+            throw new HTTPException('Reserva não encontrada', 404);
+        }
+
+        $reservation->loadSchedule();
+
+        return $reservation;
     }
 
     private function page(Request $request): int
