@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use DateTime;
+use DateTimeZone;
 use Lib\Validations;
 use Core\Database\ActiveRecord\Model;
 
@@ -11,6 +13,7 @@ use Core\Database\ActiveRecord\Model;
  * @property string $name
  * @property string $email
  * @property string $password_hash
+ * @property string|null $last_login_at
  */
 class User extends Model
 {
@@ -20,6 +23,7 @@ class User extends Model
     public const PROFILES = [self::PROFILE_STUDENT, self::PROFILE_TEACHER, self::PROFILE_ADMIN];
     public const SIGNUP_PROFILES = [self::PROFILE_STUDENT, self::PROFILE_TEACHER];
     public const PASSWORD_MIN_LENGTH = 6;
+    public const TIMEZONE = 'America/Sao_Paulo';
 
     private const HOME_ROUTES = [
         self::PROFILE_STUDENT => 'student.home',
@@ -34,7 +38,7 @@ class User extends Model
     ];
 
     protected static string $table = 'users';
-    protected static array $columns = ['profile', 'name', 'email', 'password_hash'];
+    protected static array $columns = ['profile', 'name', 'email', 'password_hash', 'last_login_at'];
 
     protected ?string $password = null;
     protected ?string $password_confirmation = null;
@@ -95,6 +99,22 @@ class User extends Model
     public function profileLabel(): string
     {
         return self::LABELS[$this->profile];
+    }
+
+    public function registerLogin(): void
+    {
+        $now = new DateTime('now', new DateTimeZone(self::TIMEZONE));
+
+        $this->update(['last_login_at' => $now->format('Y-m-d H:i:s')]);
+    }
+
+    public function lastLoginLabel(): ?string
+    {
+        if ($this->last_login_at === null) {
+            return null;
+        }
+
+        return (new DateTime($this->last_login_at))->format('d/m/Y \à\s H:i');
     }
 
     public function authenticate(string $password): bool

@@ -179,4 +179,35 @@ class AuthenticationsControllerTest extends ControllerTestCase
         $this->assertFalse(isset($_SESSION['user']['id']));
         $this->assertEquals('Logout realizado com sucesso!', $_SESSION['flash']['success']);
     }
+
+    public function test_verify_code_should_register_the_login(): void
+    {
+        $code = Auth::startCodeVerification($this->user);
+
+        $this->post(
+            action: 'verifyCode',
+            controllerName: 'App\Controllers\AuthenticationsController',
+            params: ['code' => $code]
+        );
+
+        $this->assertNotNull(User::findById($this->user->id)->last_login_at);
+        $this->assertEquals('Login realizado com sucesso!', $_SESSION['flash']['success']);
+    }
+
+    public function test_verify_code_should_show_the_previous_login(): void
+    {
+        $this->user->update(['last_login_at' => '2026-10-20 08:15:00']);
+        $code = Auth::startCodeVerification($this->user);
+
+        $this->post(
+            action: 'verifyCode',
+            controllerName: 'App\Controllers\AuthenticationsController',
+            params: ['code' => $code]
+        );
+
+        $this->assertEquals(
+            'Login realizado com sucesso! Último acesso em 20/10/2026 às 08:15.',
+            $_SESSION['flash']['success']
+        );
+    }
 }

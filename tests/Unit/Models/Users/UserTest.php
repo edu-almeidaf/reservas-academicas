@@ -292,4 +292,27 @@ class UserTest extends TestCase
 
         $this->assertEquals('não é um valor válido!', $user->errors('profile'));
     }
+
+    public function test_new_user_has_no_last_login(): void
+    {
+        $this->assertNull($this->user->last_login_at);
+        $this->assertNull($this->user->lastLoginLabel());
+    }
+
+    public function test_register_login_should_save_the_current_date_and_time(): void
+    {
+        $this->user->registerLogin();
+
+        $lastLogin = User::findById($this->user->id)->last_login_at;
+
+        $this->assertNotNull($lastLogin);
+        $this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $lastLogin);
+    }
+
+    public function test_last_login_label_should_format_the_date(): void
+    {
+        $this->user->last_login_at = '2026-10-22 19:40:00';
+
+        $this->assertEquals('22/10/2026 às 19:40', $this->user->lastLoginLabel());
+    }
 }

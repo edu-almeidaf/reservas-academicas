@@ -51,9 +51,16 @@ class AuthenticationsController extends Controller
         $user = $isValidFormat ? Auth::verifyCode($code) : null;
 
         if ($user) {
+            $lastLogin = $user->lastLoginLabel();
+            $user->registerLogin();
             Auth::login($user);
 
-            FlashMessage::success('Login realizado com sucesso!');
+            $message = 'Login realizado com sucesso!';
+            if ($lastLogin !== null) {
+                $message .= " Último acesso em {$lastLogin}.";
+            }
+
+            FlashMessage::success($message);
             $this->redirectTo(route('root'));
         } else {
             FlashMessage::danger('Código de verificação inválido!');
