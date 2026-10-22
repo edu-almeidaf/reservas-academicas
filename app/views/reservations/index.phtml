@@ -29,7 +29,11 @@
                         <?= $schedule ? substr($schedule->start_time, 0, 5) . ' - ' . substr($schedule->end_time, 0, 5) : '' ?>
                     </td>
                     <td><?= $reservation->statusLabel() ?></td>
-                    <td></td>
+                    <td>
+                        <?php if ($reservation->isPending()) : ?>
+                            <a href="<?= route('reservations.edit', ['id' => $reservation->id]) ?>">Editar</a>
+                        <?php endif; ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>

@@ -291,4 +291,148 @@ class ReservationsControllerTest extends ControllerTestCase
         $this->assertEquals(Reservation::STATUS_PENDING, $reservation->status);
         $this->assertNotEquals(50, $reservation->id);
     }
+
+    public function test_render_edit_form_with_the_reservation_values(): void
+    {
+        $reservation = $this->createReservation(1);
+
+        $response = $this->get(
+            action: 'edit',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id]
+        );
+
+        $this->assertMatchesRegularExpression("/<h1>\s*Editar Reserva #{$reservation->id}\s*<\/h1>/", $response);
+        $this->assertStringContainsString("<form action=\"/reservations/{$reservation->id}\" method=\"POST\"", $response);
+        $this->assertStringContainsString('<input type="hidden" name="_method" value="PUT">', $response);
+        $this->assertStringContainsString("value=\"{$this->futureDate(1)}\"", $response);
+        $this->assertStringContainsString('value="08:00"', $response);
+        $this->assertStringContainsString('value="10:00"', $response);
+        $this->assertStringContainsString('Aula de Banco de Dados</textarea>', $response);
+        $this->assertStringContainsString('Atualizar', $response);
+    }
+
+    public function test_successfully_update_reservation(): void
+    {
+        $reservation = $this->createReservation(1);
+
+        $response = $this->put(
+            action: 'update',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id] + $this->reservationParams([
+                'scheduled_date' => $this->futureDate(1),
+                'start_time' => '14:00',
+                'end_time' => '16:00',
+                'motive' => 'Aula de Redes',
+            ])
+        );
+
+        $this->assertEquals('Location: /reservations', $response);
+        $this->assertEquals('Reserva atualizada com sucesso!', $_SESSION['flash']['success']);
+
+        $updated = Reservation::findById($reservation->id);
+        $updated->loadSchedule();
+        $this->assertEquals('Aula de Redes', $updated->motive);
+        $this->assertEquals('14:00', $updated->start_time);
+        $this->assertEquals('16:00', $updated->end_time);
+        $this->assertCount(1, ReservationSchedule::where(['reservation_id' => $reservation->id]));
+    }
+
+    public function test_update_keeping_the_schedule_does_not_conflict_with_itself(): void
+    {
+        $reservation = $this->createReservation(1);
+
+        $response = $this->put(
+            action: 'update',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id, 'reservation' => ['motive' => 'Outro motivo']]
+        );
+
+        $this->assertEquals('Location: /reservations', $response);
+        $this->assertEquals('Outro motivo', Reservation::findById($reservation->id)->motive);
+    }
+
+    public function test_unsuccessfully_update_reservation(): void
+    {
+        $reservation = $this->createReservation(1);
+
+        $response = $this->put(
+            action: 'update',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id, 'reservation' => ['motive' => '', 'end_time' => '07:00']]
+        );
+
+        $this->assertStringContainsString('Existem dados incorretos! Por favor, verifique!', $response);
+        $this->assertStringContainsString('não pode ser vazio!', $response);
+        $this->assertStringContainsString('deve ser depois do horário de início!', $response);
+
+        $unchanged = Reservation::findById($reservation->id);
+        $unchanged->loadSchedule();
+        $this->assertEquals('Aula de Banco de Dados', $unchanged->motive);
+        $this->assertEquals('10:00', $unchanged->end_time);
+    }
+
+    public function test_unsuccessfully_update_reservation_with_schedule_conflict(): void
+    {
+        $this->createReservation(1, '14:00', '16:00');
+        $reservation = $this->createReservation(1);
+
+        $response = $this->put(
+            action: 'update',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id, 'reservation' => ['start_time' => '15:00', 'end_time' => '17:00']]
+        );
+
+        $this->assertStringContainsString('Horário indisponível para reserva.', $response);
+    }
+
+    public function test_not_pending_reservation_cannot_be_changed(): void
+    {
+        $reservation = $this->createReservation(1);
+        $reservation->status = Reservation::STATUS_APPROVED;
+        $reservation->save();
+        $id = (string) $reservation->id;
+
+        foreach (['edit' => 'get', 'update' => 'put'] as $action => $method) {
+            unset($_SESSION['flash']);
+
+            $response = $this->$method(
+                action: $action,
+                controllerName: 'App\Controllers\ReservationsController',
+                params: ['id' => $id, 'reservation' => ['motive' => 'Outro motivo']]
+            );
+
+            $this->assertEquals("Location: /reservations/{$id}", $response, $action);
+            $this->assertEquals('Somente reservas pendentes podem ser alteradas.', $_SESSION['flash']['danger']);
+        }
+
+        $this->assertEquals('Aula de Banco de Dados', Reservation::findById($reservation->id)->motive);
+    }
+
+    public function test_edit_link_only_for_pending_reservations(): void
+    {
+        $pending = $this->createReservation(1);
+        $approved = $this->createReservation(2);
+        $approved->status = Reservation::STATUS_APPROVED;
+        $approved->save();
+
+        $response = $this->get(action: 'index', controllerName: 'App\Controllers\ReservationsController');
+
+        $this->assertStringContainsString("/reservations/{$pending->id}/edit", $response);
+        $this->assertStringNotContainsString("/reservations/{$approved->id}/edit", $response);
+    }
+
+    public function test_update_reservation_from_another_user_is_not_found(): void
+    {
+        $other = $this->newReservation(['user_id' => $this->createUser('outro@example.com')->id]);
+        $other->save();
+
+        $this->expectException(HTTPException::class);
+
+        $this->put(
+            action: 'update',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $other->id, 'reservation' => ['motive' => 'Invasão']]
+        );
+    }
 }

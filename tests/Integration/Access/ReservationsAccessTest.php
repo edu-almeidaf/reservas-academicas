@@ -50,6 +50,8 @@ class ReservationsAccessTest extends TestCase
             'new' => ['GET', '/reservations/new'],
             'create' => ['POST', '/reservations'],
             'show' => ['GET', '/reservations/1'],
+            'edit' => ['GET', '/reservations/1/edit'],
+            'update' => ['PUT', '/reservations/1'],
         ];
     }
 
