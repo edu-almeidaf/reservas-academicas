@@ -315,4 +315,51 @@ class UserTest extends TestCase
 
         $this->assertEquals('22/10/2026 às 19:40', $this->user->lastLoginLabel());
     }
+
+    public function test_new_user_starts_without_failed_attempts(): void
+    {
+        $user = User::findById($this->user->id);
+
+        $this->assertSame(0, $user->failed_login_attempts);
+        $this->assertNull($user->locked_until);
+        $this->assertFalse($user->isLocked());
+    }
+
+    public function test_register_failed_login_should_count_the_attempts(): void
+    {
+        $this->user->registerFailedLogin();
+
+        $this->assertSame(1, User::findById($this->user->id)->failed_login_attempts);
+        $this->assertFalse($this->user->isLocked());
+    }
+
+    public function test_user_is_locked_after_the_maximum_of_attempts(): void
+    {
+        for ($i = 0; $i < User::MAX_LOGIN_ATTEMPTS; $i++) {
+            $this->user->registerFailedLogin();
+        }
+
+        $user = User::findById($this->user->id);
+
+        $this->assertTrue($user->isLocked());
+        $this->assertSame(0, $user->failed_login_attempts);
+    }
+
+    public function test_user_is_not_locked_after_the_lock_time(): void
+    {
+        $this->user->locked_until = '2020-01-01 00:00:00';
+
+        $this->assertFalse($this->user->isLocked());
+    }
+
+    public function test_register_login_should_reset_the_attempts(): void
+    {
+        $this->user->registerFailedLogin();
+        $this->user->registerLogin();
+
+        $user = User::findById($this->user->id);
+
+        $this->assertSame(0, $user->failed_login_attempts);
+        $this->assertNull($user->locked_until);
+    }
 }

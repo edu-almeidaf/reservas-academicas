@@ -14,6 +14,8 @@ use Core\Database\ActiveRecord\Model;
  * @property string $email
  * @property string $password_hash
  * @property string|null $last_login_at
+ * @property int $failed_login_attempts
+ * @property string|null $locked_until
  */
 class User extends Model
 {
@@ -24,6 +26,8 @@ class User extends Model
     public const SIGNUP_PROFILES = [self::PROFILE_STUDENT, self::PROFILE_TEACHER];
     public const PASSWORD_MIN_LENGTH = 6;
     public const TIMEZONE = 'America/Sao_Paulo';
+    public const MAX_LOGIN_ATTEMPTS = 3;
+    public const LOCK_MINUTES = 5;
 
     private const HOME_ROUTES = [
         self::PROFILE_STUDENT => 'student.home',
@@ -38,7 +42,15 @@ class User extends Model
     ];
 
     protected static string $table = 'users';
-    protected static array $columns = ['profile', 'name', 'email', 'password_hash', 'last_login_at'];
+    protected static array $columns = [
+        'profile',
+        'name',
+        'email',
+        'password_hash',
+        'last_login_at',
+        'failed_login_attempts',
+        'locked_until',
+    ];
 
     protected ?string $password = null;
     protected ?string $password_confirmation = null;
@@ -101,11 +113,50 @@ class User extends Model
         return self::LABELS[$this->profile];
     }
 
+    /**
+     * @param array<string, mixed> $params
+     */
+    public function __construct($params = [])
+    {
+        parent::__construct($params);
+
+        if ($this->failed_login_attempts === null) {
+            $this->failed_login_attempts = 0;
+        }
+    }
+
     public function registerLogin(): void
     {
-        $now = new DateTime('now', new DateTimeZone(self::TIMEZONE));
+        $this->update([
+            'last_login_at' => self::now()->format('Y-m-d H:i:s'),
+            'failed_login_attempts' => 0,
+            'locked_until' => null,
+        ]);
+    }
 
-        $this->update(['last_login_at' => $now->format('Y-m-d H:i:s')]);
+    public function registerFailedLogin(): void
+    {
+        $attempts = $this->failed_login_attempts + 1;
+
+        if ($attempts < self::MAX_LOGIN_ATTEMPTS) {
+            $this->update(['failed_login_attempts' => $attempts]);
+            return;
+        }
+
+        $this->update([
+            'failed_login_attempts' => 0,
+            'locked_until' => self::now()->modify('+' . self::LOCK_MINUTES . ' minutes')->format('Y-m-d H:i:s'),
+        ]);
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->locked_until !== null && $this->locked_until > self::now()->format('Y-m-d H:i:s');
+    }
+
+    private static function now(): DateTime
+    {
+        return new DateTime('now', new DateTimeZone(self::TIMEZONE));
     }
 
     public function lastLoginLabel(): ?string

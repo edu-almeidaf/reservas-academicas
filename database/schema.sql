@@ -20,6 +20,8 @@ CREATE TABLE users (
     email VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     last_login_at DATETIME NULL,
+    failed_login_attempts INT NOT NULL DEFAULT 0,
+    locked_until DATETIME NULL,
     UNIQUE KEY uq_users_email (email)
 ) ENGINE=InnoDB;
 

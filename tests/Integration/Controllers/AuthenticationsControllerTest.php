@@ -210,4 +210,48 @@ class AuthenticationsControllerTest extends ControllerTestCase
             $_SESSION['flash']['success']
         );
     }
+
+    private function authenticateWith(string $password): string
+    {
+        return $this->post(
+            action: 'authenticate',
+            controllerName: 'App\Controllers\AuthenticationsController',
+            params: ['user' => ['email' => 'fulano@example.com', 'password' => $password]]
+        );
+    }
+
+    public function test_wrong_password_should_count_a_failed_attempt(): void
+    {
+        $this->authenticateWith('wrong');
+
+        $this->assertSame(1, User::findById($this->user->id)->failed_login_attempts);
+    }
+
+    public function test_user_should_be_locked_after_too_many_attempts(): void
+    {
+        for ($i = 0; $i < User::MAX_LOGIN_ATTEMPTS; $i++) {
+            $this->authenticateWith('wrong');
+        }
+
+        $response = $this->authenticateWith('123456');
+
+        $this->assertEquals('Location: /login', $response);
+        $this->assertFalse(Auth::hasPendingCode());
+        $this->assertEquals(
+            'Muitas tentativas de login. Tente novamente em ' . User::LOCK_MINUTES . ' minutos.',
+            $_SESSION['flash']['danger']
+        );
+    }
+
+    public function test_unknown_email_does_not_fail(): void
+    {
+        $response = $this->post(
+            action: 'authenticate',
+            controllerName: 'App\Controllers\AuthenticationsController',
+            params: ['user' => ['email' => 'ninguem@example.com', 'password' => 'wrong']]
+        );
+
+        $this->assertEquals('Location: /login', $response);
+        $this->assertEquals('Email e/ou senha inválidos!', $_SESSION['flash']['danger']);
+    }
 }

@@ -22,12 +22,20 @@ class AuthenticationsController extends Controller
         $params = $request->getParam('user', []);
         $user = User::findByEmail($params['email'] ?? '');
 
+        if ($user && $user->isLocked()) {
+            FlashMessage::danger('Muitas tentativas de login. Tente novamente em ' . User::LOCK_MINUTES . ' minutos.');
+            $this->redirectTo(route('users.login'));
+            return;
+        }
+
         if ($user && $user->authenticate($params['password'] ?? '')) {
             $code = Auth::startCodeVerification($user);
 
             FlashMessage::success("Código de verificação enviado: {$code}");
             $this->redirectTo(route('users.code'));
         } else {
+            $user?->registerFailedLogin();
+
             FlashMessage::danger('Email e/ou senha inválidos!');
             $this->redirectTo(route('users.login'));
         }
