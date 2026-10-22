@@ -19,6 +19,7 @@ class User extends Model
     public const PROFILE_ADMIN = 'tecnico';
     public const PROFILES = [self::PROFILE_STUDENT, self::PROFILE_TEACHER, self::PROFILE_ADMIN];
     public const SIGNUP_PROFILES = [self::PROFILE_STUDENT, self::PROFILE_TEACHER];
+    public const PASSWORD_MIN_LENGTH = 6;
 
     private const HOME_ROUTES = [
         self::PROFILE_STUDENT => 'student.home',
@@ -50,6 +51,7 @@ class User extends Model
         if ($this->newRecord()) {
             Validations::notEmpty('password', $this);
             Validations::passwordConfirmation($this);
+            Validations::minLength('password', self::PASSWORD_MIN_LENGTH, $this);
         }
     }
 

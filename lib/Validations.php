@@ -56,6 +56,22 @@ class Validations
         return true;
     }
 
+    public static function minLength(string $attribute, int $length, Model $obj): bool
+    {
+        $value = $obj->$attribute;
+
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        if (mb_strlen($value) < $length) {
+            $obj->addError($attribute, "deve ter no mínimo {$length} caracteres!");
+            return false;
+        }
+
+        return true;
+    }
+
     public static function uniqueness($fields, $object)
     {
         $dbFieldsValues = [];

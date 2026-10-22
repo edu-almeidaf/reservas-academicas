@@ -67,4 +67,25 @@ class ValidationsTest extends TestCase
         $model->profile = 'a';
         $this->assertTrue(Validations::inclusion('profile', ['a', 'b'], $model));
     }
+
+    public function test_min_length(): void
+    {
+        $model = new class () extends Model {
+            protected static array $columns = ['password'];
+        };
+
+        $length = 6;
+
+        $this->assertTrue(Validations::minLength('password', $length, $model));
+
+        $model->password = "12345"; // @phpstan-ignore-line
+        $this->assertFalse(Validations::minLength('password', $length, $model));
+        $this->assertEquals("deve ter no mínimo {$length} caracteres!", $model->errors('password'));
+
+        $model->password = "123456";
+        $this->assertTrue(Validations::minLength('password', $length, $model));
+
+        $model->password = "1234567";
+        $this->assertTrue(Validations::minLength('password', $length, $model));
+    }
 }

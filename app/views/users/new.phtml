@@ -29,6 +29,7 @@
     <div class="form-group mb-3">
         <label for="user_password" class="form-label">Senha</label>
         <input id="user_password" type="password" name="user[password]"
+            minlength="<?= App\Models\User::PASSWORD_MIN_LENGTH ?>"
             class="form-control <?= $user->errors('password') ? 'is-invalid' : '' ?>" required>
         <div class="invalid-feedback"><?= $user->errors('password') ?></div>
     </div>

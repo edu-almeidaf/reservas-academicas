@@ -105,6 +105,46 @@ class UserTest extends TestCase
         $this->assertEquals('as senhas devem ser idênticas!', $user->errors('password'));
     }
 
+    public function test_errors_should_return_password_length_error(): void
+    {
+        $shortPassword = str_repeat('1', User::PASSWORD_MIN_LENGTH - 1);
+
+        $user = new User([
+            'profile' => 'discente',
+            'name' => 'User 4',
+            'email' => 'fulano3@example.com',
+            'password' => $shortPassword,
+            'password_confirmation' => $shortPassword
+        ]);
+
+        $this->assertFalse($user->isValid());
+        $this->assertFalse($user->save());
+
+        $this->assertEquals(
+            'deve ter no mínimo ' . User::PASSWORD_MIN_LENGTH . ' caracteres!',
+            $user->errors('password')
+        );
+    }
+
+    public function test_password_length_error_wins_over_confirmation_error(): void
+    {
+        $shortPassword = str_repeat('1', User::PASSWORD_MIN_LENGTH - 1);
+
+        $user = new User([
+            'profile' => User::PROFILE_STUDENT,
+            'name' => 'User 4',
+            'email' => 'fulano4@example.com',
+            'password' => $shortPassword,
+            'password_confirmation' => $shortPassword . 'x',
+        ]);
+
+        $this->assertFalse($user->isValid());
+        $this->assertEquals(
+            'deve ter no mínimo ' . User::PASSWORD_MIN_LENGTH . ' caracteres!',
+            $user->errors('password')
+        );
+    }
+
     public function test_find_by_id_should_return_the_user(): void
     {
         $this->assertEquals($this->user->id, User::findById($this->user->id)->id);

@@ -137,4 +137,18 @@ class UsersControllerTest extends ControllerTestCase
         $this->assertCount(2, User::all());
         $this->assertEquals('Existente', User::findById($existing->id)->name);
     }
+
+    public function test_unsuccessfully_create_user_with_short_password(): void
+    {
+        $shortPassword = str_repeat('1', User::PASSWORD_MIN_LENGTH - 1);
+
+        $response = $this->post(
+            action: 'create',
+            controllerName: 'App\Controllers\UsersController',
+            params: $this->userParams(['password' => $shortPassword, 'password_confirmation' => $shortPassword])
+        );
+
+        $this->assertStringContainsString('deve ter no mínimo ' . User::PASSWORD_MIN_LENGTH . ' caracteres!', $response);
+        $this->assertCount(0, User::all());
+    }
 }
