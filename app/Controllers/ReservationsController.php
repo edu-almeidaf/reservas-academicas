@@ -62,6 +62,46 @@ class ReservationsController extends Controller
         }
     }
 
+    public function edit(Request $request): void
+    {
+        $reservation = $this->findReservation($request);
+
+        if (!$reservation->isPending()) {
+            $this->denyChange($reservation);
+            return;
+        }
+
+        $this->renderForm('reservations/edit', $reservation, "Editar Reserva #{$reservation->id}");
+    }
+
+    public function update(Request $request): void
+    {
+        $reservation = $this->findReservation($request);
+
+        if (!$reservation->isPending()) {
+            $this->denyChange($reservation);
+            return;
+        }
+
+        foreach ($this->reservationAttributes($request->getParam('reservation')) as $attribute => $value) {
+            $reservation->$attribute = $value;
+        }
+
+        if ($reservation->save()) {
+            FlashMessage::success('Reserva atualizada com sucesso!');
+            $this->redirectTo(route('reservations.index'));
+        } else {
+            FlashMessage::danger('Existem dados incorretos! Por favor, verifique!');
+            $this->renderForm('reservations/edit', $reservation, "Editar Reserva #{$reservation->id}");
+        }
+    }
+
+    private function denyChange(Reservation $reservation): void
+    {
+        FlashMessage::danger('Somente reservas pendentes podem ser alteradas.');
+        $this->redirectTo(route('reservations.show', ['id' => $reservation->id]));
+    }
+
     /**
      * @param array<string, string|int> $attributes
      */

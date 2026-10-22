@@ -23,5 +23,8 @@
 </div>
 
 <div class="d-flex gap-2">
+    <?php if ($reservation->isPending()) : ?>
+        <a href="<?= route('reservations.edit', ['id' => $reservation->id]) ?>" class="btn btn-primary">Editar</a>
+    <?php endif; ?>
     <a href="<?= route('reservations.index') ?>" class="btn btn-outline-secondary">Voltar</a>
 </div>

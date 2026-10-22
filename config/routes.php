@@ -29,6 +29,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/reservations/new', [ReservationsController::class, 'new'])->name('reservations.new');
     Route::post('/reservations', [ReservationsController::class, 'create'])->name('reservations.create');
     Route::get('/reservations/{id}', [ReservationsController::class, 'show'])->name('reservations.show');
+    Route::get('/reservations/{id}/edit', [ReservationsController::class, 'edit'])->name('reservations.edit');
+    Route::put('/reservations/{id}', [ReservationsController::class, 'update'])->name('reservations.update');
 });
 
 // Areas
