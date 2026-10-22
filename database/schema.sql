@@ -117,7 +117,7 @@ CREATE TABLE reservation_schedules (
     KEY idx_schedule_conflict (scheduled_date, start_time, end_time, reservation_id),
     CONSTRAINT fk_reservation_schedules_reservation
         FOREIGN KEY (reservation_id) REFERENCES reservations (id)
-        ON DELETE RESTRICT ON UPDATE RESTRICT
+        ON DELETE CASCADE ON UPDATE RESTRICT
 ) ENGINE=InnoDB;
 
 CREATE TABLE reservation_subdivision (

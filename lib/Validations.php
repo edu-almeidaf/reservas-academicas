@@ -56,6 +56,25 @@ class Validations
         return true;
     }
 
+    /**
+     * @param class-string<Model> $modelClass
+     */
+    public static function existsIn(string $attribute, string $modelClass, Model $obj): bool
+    {
+        $value = $obj->$attribute;
+
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        if (!is_int($value) || $modelClass::findById($value) === null) {
+            $obj->addError($attribute, 'não é um valor válido!');
+            return false;
+        }
+
+        return true;
+    }
+
     public static function uniqueness($fields, $object)
     {
         $dbFieldsValues = [];
