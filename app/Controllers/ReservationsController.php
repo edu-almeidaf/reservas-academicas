@@ -3,15 +3,19 @@
 namespace App\Controllers;
 
 use App\Models\Reservation;
+use App\Models\ReservationCategory;
 use App\Models\ReservationSchedule;
 use App\Models\Resource;
 use Core\Exceptions\HTTPException;
 use Core\Http\Controllers\Controller;
 use Core\Http\Request;
+use Lib\FlashMessage;
 
 class ReservationsController extends Controller
 {
     private const PER_PAGE = 10;
+    private const RESERVATION_TEXT_FIELDS = ['motive', 'scheduled_date', 'start_time', 'end_time'];
+    private const RESERVATION_INTEGER_FIELDS = ['resource_id', 'reservation_category_id'];
 
     public function index(Request $request): void
     {
@@ -36,6 +40,69 @@ class ReservationsController extends Controller
 
         $title = "Reserva #{$reservation->id}";
         $this->render('reservations/show', compact('reservation', 'title'));
+    }
+
+    public function new(): void
+    {
+        $reservation = $this->newReservation([]);
+
+        $this->renderForm('reservations/new', $reservation, 'Nova Reserva');
+    }
+
+    public function create(Request $request): void
+    {
+        $reservation = $this->newReservation($this->reservationAttributes($request->getParam('reservation')));
+
+        if ($reservation->save()) {
+            FlashMessage::success('Reserva solicitada com sucesso!');
+            $this->redirectTo(route('reservations.index'));
+        } else {
+            FlashMessage::danger('Existem dados incorretos! Por favor, verifique!');
+            $this->renderForm('reservations/new', $reservation, 'Nova Reserva');
+        }
+    }
+
+    /**
+     * @param array<string, string|int> $attributes
+     */
+    private function newReservation(array $attributes): Reservation
+    {
+        /** @var Reservation $reservation */
+        $reservation = $this->current_user->reservations()->new($attributes);
+
+        return $reservation;
+    }
+
+    private function renderForm(string $view, Reservation $reservation, string $title): void
+    {
+        $resources = Resource::activeOptions();
+        $categories = ReservationCategory::options();
+        $this->render($view, compact('reservation', 'resources', 'categories', 'title'));
+    }
+
+    /**
+     * @return array<string, string|int>
+     */
+    private function reservationAttributes(mixed $params): array
+    {
+        if (!is_array($params)) {
+            return [];
+        }
+
+        $attributes = [];
+        foreach (self::RESERVATION_TEXT_FIELDS as $field) {
+            if (isset($params[$field]) && is_string($params[$field])) {
+                $attributes[$field] = $params[$field];
+            }
+        }
+
+        foreach (self::RESERVATION_INTEGER_FIELDS as $field) {
+            if (isset($params[$field]) && is_string($params[$field]) && ctype_digit($params[$field])) {
+                $attributes[$field] = (int) $params[$field];
+            }
+        }
+
+        return $attributes;
     }
 
     private function findReservation(Request $request): Reservation

@@ -47,6 +47,8 @@ class ReservationsAccessTest extends TestCase
         return [
             'index' => ['GET', '/reservations'],
             'paginate' => ['GET', '/reservations/page/2'],
+            'new' => ['GET', '/reservations/new'],
+            'create' => ['POST', '/reservations'],
             'show' => ['GET', '/reservations/1'],
         ];
     }
