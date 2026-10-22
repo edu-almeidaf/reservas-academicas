@@ -2,6 +2,10 @@
 
 namespace Tests\Unit\Models\Users;
 
+use App\Models\Reservation;
+use App\Models\ReservationCategory;
+use App\Models\Resource;
+use App\Models\ResourceCategory;
 use App\Models\User;
 use Tests\TestCase;
 
@@ -231,6 +235,34 @@ class UserTest extends TestCase
             [User::PROFILE_STUDENT => 'Discente', User::PROFILE_TEACHER => 'Docente'],
             User::signupProfileOptions()
         );
+    }
+
+    public function test_reservations_should_return_only_the_user_reservations(): void
+    {
+        $resourceCategory = new ResourceCategory(['name' => 'Laboratório']);
+        $resourceCategory->save();
+        $resource = new Resource(['resource_category_id' => $resourceCategory->id, 'name' => 'Lab 1', 'active' => 1]);
+        $resource->save();
+        $category = new ReservationCategory(['name' => 'Aula']);
+        $category->save();
+
+        foreach ([[$this->user, '08:00', '09:00'], [$this->user2, '10:00', '11:00']] as [$user, $start, $end]) {
+            $reservation = $user->reservations()->new([
+                'resource_id' => $resource->id,
+                'reservation_category_id' => $category->id,
+                'motive' => 'Aula',
+                'scheduled_date' => date('Y-m-d', strtotime('+1 day')),
+                'start_time' => $start,
+                'end_time' => $end,
+            ]);
+            $reservation->save();
+        }
+
+        $reservations = $this->user->reservations()->get();
+
+        $this->assertCount(1, $reservations);
+        $this->assertInstanceOf(Reservation::class, $reservations[0]);
+        $this->assertEquals($this->user->id, $reservations[0]->user_id);
     }
 
     public function test_update_should_not_change_the_password(): void
