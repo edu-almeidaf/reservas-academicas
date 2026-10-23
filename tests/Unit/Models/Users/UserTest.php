@@ -225,6 +225,14 @@ class UserTest extends TestCase
         $this->assertEquals('Técnico (admin)', (new User(['profile' => User::PROFILE_ADMIN]))->profileLabel());
     }
 
+    public function test_signup_profile_options(): void
+    {
+        $this->assertSame(
+            [User::PROFILE_STUDENT => 'Discente', User::PROFILE_TEACHER => 'Docente'],
+            User::signupProfileOptions()
+        );
+    }
+
     public function test_update_should_not_change_the_password(): void
     {
         $this->user->password = '654321';

@@ -65,6 +65,14 @@ class User extends Model
         return $valid;
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public static function signupProfileOptions(): array
+    {
+        return array_intersect_key(self::LABELS, array_flip(self::SIGNUP_PROFILES));
+    }
+
     public function isStudent(): bool
     {
         return $this->hasProfile(self::PROFILE_STUDENT);

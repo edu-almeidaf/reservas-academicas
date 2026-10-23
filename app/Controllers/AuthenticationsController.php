@@ -19,10 +19,10 @@ class AuthenticationsController extends Controller
 
     public function authenticate(Request $request): void
     {
-        $params = $request->getParam('user', []);
-        $user = User::findByEmail($params['email'] ?? '');
+        $credentials = $this->credentials($request->getParam('user'));
+        $user = $credentials ? User::findByEmail($credentials['email']) : null;
 
-        if ($user && $user->authenticate($params['password'] ?? '')) {
+        if ($user && $user->authenticate($credentials['password'])) {
             Auth::login($user);
 
             FlashMessage::success('Login realizado com sucesso!');
@@ -38,5 +38,24 @@ class AuthenticationsController extends Controller
         Auth::logout();
         FlashMessage::success('Logout realizado com sucesso!');
         $this->redirectTo(route('users.login'));
+    }
+
+    /**
+     * @return array{email: string, password: string}|null
+     */
+    private function credentials(mixed $params): ?array
+    {
+        if (!is_array($params) || !isset($params['email'], $params['password'])) {
+            return null;
+        }
+
+        $email = $params['email'];
+        $password = $params['password'];
+
+        if (!is_string($email) || !is_string($password) || $email === '' || $password === '') {
+            return null;
+        }
+
+        return ['email' => $email, 'password' => $password];
     }
 }
