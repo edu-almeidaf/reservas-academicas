@@ -25,6 +25,11 @@
 <div class="d-flex gap-2">
     <?php if ($reservation->isPending()) : ?>
         <a href="<?= route('reservations.edit', ['id' => $reservation->id]) ?>" class="btn btn-primary">Editar</a>
+        <form action="<?= route('reservations.destroy', ['id' => $reservation->id]) ?>" method="POST" class="m-0"
+              onsubmit="return confirm('Deseja remover esta reserva?')">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn btn-link">Remover</button>
+        </form>
     <?php endif; ?>
     <a href="<?= route('reservations.index') ?>" class="btn btn-outline-secondary">Voltar</a>
 </div>

@@ -422,6 +422,104 @@ class ReservationsControllerTest extends ControllerTestCase
         $this->assertStringNotContainsString("/reservations/{$approved->id}/edit", $response);
     }
 
+    public function test_remove_reservation_and_its_schedule(): void
+    {
+        $reservation = $this->createReservation(1);
+        unset($_SESSION['flash']);
+
+        $response = $this->post(
+            action: 'destroy',
+            controllerName: 'App\\Controllers\\ReservationsController',
+            params: ['id' => (string) $reservation->id]
+        );
+
+        $this->assertEquals('Location: /reservations', $response);
+        $this->assertEquals('Reserva removida com sucesso!', $_SESSION['flash']['success']);
+        $this->assertNull(Reservation::findById($reservation->id));
+        $this->assertCount(0, ReservationSchedule::where(['reservation_id' => $reservation->id]));
+    }
+
+    public function test_non_pending_reservation_cannot_be_removed(): void
+    {
+        $reservation = $this->createReservation(1);
+        $reservation->status = Reservation::STATUS_APPROVED;
+        $reservation->save();
+        unset($_SESSION['flash']);
+
+        $response = $this->post(
+            action: 'destroy',
+            controllerName: 'App\\Controllers\\ReservationsController',
+            params: ['id' => (string) $reservation->id]
+        );
+
+        $this->assertEquals("Location: /reservations/{$reservation->id}", $response);
+        $this->assertEquals('Somente reservas pendentes podem ser removidas.', $_SESSION['flash']['danger']);
+        $this->assertNotNull(Reservation::findById($reservation->id));
+        $this->assertCount(1, ReservationSchedule::where(['reservation_id' => $reservation->id]));
+    }
+
+    public function test_destroy_reservation_from_another_user_is_not_found(): void
+    {
+        $other = $this->newReservation(['user_id' => $this->createUser('outro@example.com')->id]);
+        $other->save();
+
+        try {
+            $this->post(
+                action: 'destroy',
+                controllerName: 'App\\Controllers\\ReservationsController',
+                params: ['id' => (string) $other->id]
+            );
+            $this->fail('Expected HTTPException');
+        } catch (HTTPException $e) {
+            $this->assertEquals(404, $e->getStatusCode());
+            $this->assertEquals('Reserva não encontrada', $e->getMessage());
+        }
+    }
+
+    public function test_destroy_nonexistent_reservation_is_not_found(): void
+    {
+        try {
+            $this->post(
+                action: 'destroy',
+                controllerName: 'App\\Controllers\\ReservationsController',
+                params: ['id' => '999']
+            );
+            $this->fail('Expected HTTPException');
+        } catch (HTTPException $e) {
+            $this->assertEquals(404, $e->getStatusCode());
+            $this->assertEquals('Reserva não encontrada', $e->getMessage());
+        }
+    }
+
+    public function test_remove_form_is_only_shown_for_pending_reservations(): void
+    {
+        $pending = $this->createReservation(1);
+        $approved = $this->createReservation(2);
+        $approved->status = Reservation::STATUS_APPROVED;
+        $approved->save();
+
+        $index = $this->get(action: 'index', controllerName: 'App\\Controllers\\ReservationsController');
+        $this->assertStringContainsString("action=\"/reservations/{$pending->id}\"", $index);
+        $this->assertStringContainsString("confirm('Deseja remover esta reserva?')", $index);
+        $this->assertStringNotContainsString("action=\"/reservations/{$approved->id}\"", $index);
+
+        $pendingShow = $this->get(
+            action: 'show',
+            controllerName: 'App\\Controllers\\ReservationsController',
+            params: ['id' => (string) $pending->id]
+        );
+        $approvedShow = $this->get(
+            action: 'show',
+            controllerName: 'App\\Controllers\\ReservationsController',
+            params: ['id' => (string) $approved->id]
+        );
+
+        $this->assertStringContainsString("action=\"/reservations/{$pending->id}\"", $pendingShow);
+        $this->assertStringContainsString('<input type="hidden" name="_method" value="DELETE">', $pendingShow);
+        $this->assertStringNotContainsString("action=\"/reservations/{$approved->id}\"", $approvedShow);
+        $this->assertStringNotContainsString('<input type="hidden" name="_method" value="DELETE">', $approvedShow);
+    }
+
     public function test_update_reservation_from_another_user_is_not_found(): void
     {
         $other = $this->newReservation(['user_id' => $this->createUser('outro@example.com')->id]);
