@@ -67,7 +67,7 @@ class ReservationsController extends Controller
         $reservation = $this->findReservation($request);
 
         if (!$reservation->isPending()) {
-            $this->denyChange($reservation);
+            $this->denyChange($reservation, 'Somente reservas pendentes podem ser alteradas.');
             return;
         }
 
@@ -79,7 +79,7 @@ class ReservationsController extends Controller
         $reservation = $this->findReservation($request);
 
         if (!$reservation->isPending()) {
-            $this->denyChange($reservation);
+            $this->denyChange($reservation, 'Somente reservas pendentes podem ser alteradas.');
             return;
         }
 
@@ -101,19 +101,22 @@ class ReservationsController extends Controller
         $reservation = $this->findReservation($request);
 
         if (!$reservation->isPending()) {
-            $this->denyChange($reservation);
+            $this->denyChange($reservation, 'Somente reservas pendentes podem ser removidas.');
             return;
         }
 
-        $reservation->destroy();
+        if ($reservation->destroy()) {
+            FlashMessage::success('Reserva removida com sucesso!');
+        } else {
+            FlashMessage::danger('Não foi possível remover a reserva.');
+        }
 
-        FlashMessage::success('Reserva removida com sucesso!');
         $this->redirectTo(route('reservations.index'));
     }
 
-    private function denyChange(Reservation $reservation): void
+    private function denyChange(Reservation $reservation, string $message): void
     {
-        FlashMessage::danger('Somente reservas pendentes podem ser alteradas.');
+        FlashMessage::danger($message);
         $this->redirectTo(route('reservations.show', ['id' => $reservation->id]));
     }
 

@@ -453,7 +453,7 @@ class ReservationsControllerTest extends ControllerTestCase
         );
 
         $this->assertEquals("Location: /reservations/{$reservation->id}", $response);
-        $this->assertEquals('Somente reservas pendentes podem ser alteradas.', $_SESSION['flash']['danger']);
+        $this->assertEquals('Somente reservas pendentes podem ser removidas.', $_SESSION['flash']['danger']);
         $this->assertNotNull(Reservation::findById($reservation->id));
         $this->assertCount(1, ReservationSchedule::where(['reservation_id' => $reservation->id]));
     }
@@ -514,8 +514,10 @@ class ReservationsControllerTest extends ControllerTestCase
             params: ['id' => (string) $approved->id]
         );
 
-        $this->assertStringContainsString('Remover', $pendingShow);
-        $this->assertStringNotContainsString('Remover', $approvedShow);
+        $this->assertStringContainsString("action=\"/reservations/{$pending->id}\"", $pendingShow);
+        $this->assertStringContainsString('<input type="hidden" name="_method" value="DELETE">', $pendingShow);
+        $this->assertStringNotContainsString("action=\"/reservations/{$approved->id}\"", $approvedShow);
+        $this->assertStringNotContainsString('<input type="hidden" name="_method" value="DELETE">', $approvedShow);
     }
 
     public function test_update_reservation_from_another_user_is_not_found(): void
