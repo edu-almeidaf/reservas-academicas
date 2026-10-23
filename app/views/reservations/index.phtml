@@ -32,6 +32,11 @@
                     <td>
                         <?php if ($reservation->isPending()) : ?>
                             <a href="<?= route('reservations.edit', ['id' => $reservation->id]) ?>">Editar</a>
+                            <form action="<?= route('reservations.destroy', ['id' => $reservation->id]) ?>" method="POST" class="m-0"
+                                  onsubmit="return confirm('Deseja remover esta reserva?')">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-link">Remover</button>
+                            </form>
                         <?php endif; ?>
                     </td>
                 </tr>

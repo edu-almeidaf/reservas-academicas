@@ -96,6 +96,21 @@ class ReservationsController extends Controller
         }
     }
 
+    public function destroy(Request $request): void
+    {
+        $reservation = $this->findReservation($request);
+
+        if (!$reservation->isPending()) {
+            $this->denyChange($reservation);
+            return;
+        }
+
+        $reservation->destroy();
+
+        FlashMessage::success('Reserva removida com sucesso!');
+        $this->redirectTo(route('reservations.index'));
+    }
+
     private function denyChange(Reservation $reservation): void
     {
         FlashMessage::danger('Somente reservas pendentes podem ser alteradas.');
