@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Core\Database\ActiveRecord\HasMany;
 use Lib\Validations;
 use Core\Database\ActiveRecord\Model;
 
@@ -11,6 +12,7 @@ use Core\Database\ActiveRecord\Model;
  * @property string $name
  * @property string $email
  * @property string $password_hash
+ * @property Reservation[] $reservations
  */
 class User extends Model
 {
@@ -101,6 +103,11 @@ class User extends Model
     public function profileLabel(): string
     {
         return self::LABELS[$this->profile];
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class, 'user_id');
     }
 
     public function authenticate(string $password): bool

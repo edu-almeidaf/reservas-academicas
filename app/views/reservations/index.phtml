@@ -1,0 +1,50 @@
+<div class="mb-3">
+    <a href="<?= route('reservations.new') ?>" class="btn btn-primary">Nova Reserva</a>
+</div>
+
+<?php if (empty($reservations)) : ?>
+    <p>Você ainda não tem reservas.</p>
+<?php else : ?>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Recurso</th>
+                <th>Data</th>
+                <th>Horário</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($reservations as $reservation) : ?>
+                <?php $schedule = $schedules[$reservation->id] ?? null; ?>
+                <tr>
+                    <td>
+                        <a href="<?= route('reservations.show', ['id' => $reservation->id]) ?>">#<?= $reservation->id ?></a>
+                    </td>
+                    <td><?= htmlspecialchars($resources[$reservation->resource_id] ?? '') ?></td>
+                    <td><?= $schedule ? date('d/m/Y', strtotime($schedule->scheduled_date)) : '' ?></td>
+                    <td>
+                        <?= $schedule ? substr($schedule->start_time, 0, 5) . ' - ' . substr($schedule->end_time, 0, 5) : '' ?>
+                    </td>
+                    <td><?= $reservation->statusLabel() ?></td>
+                    <td>
+                        <?php if ($reservation->isPending()) : ?>
+                            <div class="d-flex gap-2 align-items-center">
+                                <a href="<?= route('reservations.edit', ['id' => $reservation->id]) ?>">Editar</a>
+                                <form action="<?= route('reservations.destroy', ['id' => $reservation->id]) ?>" method="POST" class="m-0"
+                                      onsubmit="return confirm('Deseja remover esta reserva?')">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="submit" class="btn btn-link p-0">Remover</button>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <?php $paginator->renderPagesNavigation(); ?>
+<?php endif; ?>
