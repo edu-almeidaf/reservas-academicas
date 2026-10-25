@@ -4,6 +4,7 @@ namespace Lib;
 
 use Core\Database\ActiveRecord\Model;
 use Core\Database\Database;
+use DateTime;
 
 class Validations
 {
@@ -56,6 +57,35 @@ class Validations
         return true;
     }
 
+    /**
+     * @param class-string<Model> $modelClass
+     */
+    public static function existsIn(string $attribute, string $modelClass, Model $obj): bool
+    {
+        $value = $obj->$attribute;
+
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        if (!is_int($value) || $modelClass::findById($value) === null) {
+            $obj->addError($attribute, 'não é um valor válido!');
+            return false;
+        }
+
+        return true;
+    }
+
+    public static function date(string $attribute, Model $obj): bool
+    {
+        return self::dateTimeFormat($attribute, 'Y-m-d', 'não é uma data válida!', $obj);
+    }
+
+    public static function time(string $attribute, Model $obj): bool
+    {
+        return self::dateTimeFormat($attribute, 'H:i', 'não é um horário válido!', $obj);
+    }
+
     public static function uniqueness($fields, $object)
     {
         $dbFieldsValues = [];
@@ -102,6 +132,24 @@ class Validations
             foreach ($fields as $field) {
                 $object->addError($field, 'já existe um registro com esse dado');
             }
+            return false;
+        }
+
+        return true;
+    }
+
+    private static function dateTimeFormat(string $attribute, string $format, string $message, Model $obj): bool
+    {
+        $value = $obj->$attribute;
+
+        if ($value === null || $value === '') {
+            return true;
+        }
+
+        $parsed = is_string($value) ? DateTime::createFromFormat('!' . $format, $value) : false;
+
+        if ($parsed === false || $parsed->format($format) !== $value) {
+            $obj->addError($attribute, $message);
             return false;
         }
 

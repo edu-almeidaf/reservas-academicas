@@ -1,0 +1,59 @@
+<div class="form-group mb-3">
+    <label for="reservation_resource_id" class="form-label">Recurso</label>
+    <select id="reservation_resource_id" name="reservation[resource_id]"
+        class="form-select <?= $reservation->errors('resource_id') ? 'is-invalid' : '' ?>" required>
+        <option value="">Selecione...</option>
+        <?php foreach ($resources as $id => $name) : ?>
+            <option value="<?= $id ?>" <?= $reservation->resource_id === $id ? 'selected' : '' ?>>
+                <?= htmlspecialchars($name) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+    <div class="invalid-feedback"><?= $reservation->errors('resource_id') ?></div>
+</div>
+
+<div class="form-group mb-3">
+    <label for="reservation_reservation_category_id" class="form-label">Categoria</label>
+    <select id="reservation_reservation_category_id" name="reservation[reservation_category_id]"
+        class="form-select <?= $reservation->errors('reservation_category_id') ? 'is-invalid' : '' ?>" required>
+        <option value="">Selecione...</option>
+        <?php foreach ($categories as $id => $name) : ?>
+            <option value="<?= $id ?>" <?= $reservation->reservation_category_id === $id ? 'selected' : '' ?>>
+                <?= htmlspecialchars($name) ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+    <div class="invalid-feedback"><?= $reservation->errors('reservation_category_id') ?></div>
+</div>
+
+<div class="row">
+    <div class="form-group mb-3 col-md-4">
+        <label for="reservation_scheduled_date" class="form-label">Data</label>
+        <input id="reservation_scheduled_date" type="date" name="reservation[scheduled_date]"
+            value="<?= htmlspecialchars($reservation->scheduled_date ?? '') ?>" min="<?= date('Y-m-d') ?>"
+            class="form-control <?= $reservation->errors('scheduled_date') ? 'is-invalid' : '' ?>" required>
+        <div class="invalid-feedback"><?= $reservation->errors('scheduled_date') ?></div>
+    </div>
+    <div class="form-group mb-3 col-md-4">
+        <label for="reservation_start_time" class="form-label">Início</label>
+        <input id="reservation_start_time" type="time" name="reservation[start_time]"
+            value="<?= htmlspecialchars($reservation->start_time ?? '') ?>"
+            class="form-control <?= $reservation->errors('start_time') ? 'is-invalid' : '' ?>" required>
+        <div class="invalid-feedback"><?= $reservation->errors('start_time') ?></div>
+    </div>
+    <div class="form-group mb-3 col-md-4">
+        <label for="reservation_end_time" class="form-label">Fim</label>
+        <input id="reservation_end_time" type="time" name="reservation[end_time]"
+            value="<?= htmlspecialchars($reservation->end_time ?? '') ?>"
+            class="form-control <?= $reservation->errors('end_time') ? 'is-invalid' : '' ?>" required>
+        <div class="invalid-feedback"><?= $reservation->errors('end_time') ?></div>
+    </div>
+</div>
+
+<div class="form-group mb-3">
+    <label for="reservation_motive" class="form-label">Motivo</label>
+    <textarea id="reservation_motive" name="reservation[motive]" rows="3"
+        class="form-control <?= $reservation->errors('motive') ? 'is-invalid' : '' ?>"
+        required><?= htmlspecialchars($reservation->motive ?? '') ?></textarea>
+    <div class="invalid-feedback"><?= $reservation->errors('motive') ?></div>
+</div>

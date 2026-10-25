@@ -1,0 +1,8 @@
+<form action="<?= route('reservations.create') ?>" method="POST" novalidate>
+    <?php require '_form.phtml'; ?>
+
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Solicitar</button>
+        <a href="<?= route('reservations.index') ?>" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</form>
