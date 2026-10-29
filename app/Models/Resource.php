@@ -53,6 +53,11 @@ class Resource extends Model
         return $this->active === 1;
     }
 
+    public function statusLabel(): string
+    {
+        return $this->isActive() ? 'Ativo' : 'Inativo';
+    }
+
     public function hasReservations(): bool
     {
         return Reservation::exists(['resource_id' => $this->id]);
