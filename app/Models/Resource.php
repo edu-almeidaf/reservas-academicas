@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Core\Database\ActiveRecord\BelongsTo;
+use Core\Database\ActiveRecord\HasMany;
 use Core\Database\ActiveRecord\Model;
 use Lib\Validations;
 
@@ -13,6 +14,7 @@ use Lib\Validations;
  * @property string|null $description
  * @property int $active
  * @property ResourceCategory $category
+ * @property ResourceImage[] $images
  */
 class Resource extends Model
 {
@@ -22,6 +24,11 @@ class Resource extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ResourceCategory::class, 'resource_category_id');
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ResourceImage::class, 'resource_id');
     }
 
     public function validates(): void
@@ -38,6 +45,11 @@ class Resource extends Model
     public function isActive(): bool
     {
         return $this->active === 1;
+    }
+
+    public function hasReservations(): bool
+    {
+        return Reservation::exists(['resource_id' => $this->id]);
     }
 
     /**

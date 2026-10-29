@@ -17,6 +17,7 @@
     <exclude-pattern>/database/</exclude-pattern>
     <exclude-pattern>/vendor/</exclude-pattern>
     <exclude-pattern>/tests/Support/_generated/</exclude-pattern>
+    <exclude-pattern>/tests/files/</exclude-pattern>
 
     <!-- Allow snake_case method names in classes that end with "Test" -->
     <rule ref="PSR1.Methods.CamelCapsMethodName.NotCamelCaps">
