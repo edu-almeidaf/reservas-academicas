@@ -2,8 +2,12 @@
 
 namespace Tests\Unit\Models\Resources;
 
+use App\Models\Reservation;
+use App\Models\ReservationCategory;
 use App\Models\Resource;
 use App\Models\ResourceCategory;
+use App\Models\ResourceImage;
+use App\Models\User;
 use Tests\TestCase;
 
 class ResourceTest extends TestCase
@@ -124,5 +128,53 @@ class ResourceTest extends TestCase
         $inactive->save();
 
         $this->assertSame([$this->resource->id => 'Laboratório de Redes'], Resource::activeOptions());
+    }
+
+    public function test_images_should_return_only_the_resource_images(): void
+    {
+        $other = $this->newResource(['name' => 'Auditório']);
+        $other->save();
+
+        $image = $this->resource->images()->new([
+            'file_path' => "resources/{$this->resource->id}/image.jpg",
+            'mime_type' => 'image/jpeg',
+        ]);
+        $image->save();
+        $other->images()->new(['file_path' => "resources/{$other->id}/image.png", 'mime_type' => 'image/png'])->save();
+
+        $images = $this->resource->images;
+
+        $this->assertCount(1, $images);
+        $this->assertEquals($image->id, $images[0]->id);
+        $this->assertInstanceOf(ResourceImage::class, $images[0]);
+    }
+
+    public function test_has_reservations(): void
+    {
+        $this->assertFalse($this->resource->hasReservations());
+
+        $user = new User([
+            'profile' => User::PROFILE_STUDENT,
+            'name' => 'User',
+            'email' => 'discente@example.com',
+            'password' => '123456',
+            'password_confirmation' => '123456',
+        ]);
+        $user->save();
+        $category = new ReservationCategory(['name' => 'Aula']);
+        $category->save();
+
+        $reservation = new Reservation([
+            'user_id' => $user->id,
+            'resource_id' => $this->resource->id,
+            'reservation_category_id' => $category->id,
+            'motive' => 'Aula de Redes',
+            'scheduled_date' => date('Y-m-d', strtotime('+1 day')),
+            'start_time' => '08:00',
+            'end_time' => '10:00',
+        ]);
+        $this->assertTrue($reservation->save());
+
+        $this->assertTrue($this->resource->hasReservations());
     }
 }
