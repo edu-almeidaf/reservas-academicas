@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ResourceGallery;
 use Core\Database\ActiveRecord\BelongsTo;
 use Core\Database\ActiveRecord\HasMany;
 use Core\Database\ActiveRecord\Model;
@@ -29,6 +30,11 @@ class Resource extends Model
     public function images(): HasMany
     {
         return $this->hasMany(ResourceImage::class, 'resource_id');
+    }
+
+    public function gallery(): ResourceGallery
+    {
+        return new ResourceGallery($this);
     }
 
     public function validates(): void

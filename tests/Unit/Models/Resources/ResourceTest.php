@@ -8,6 +8,7 @@ use App\Models\Resource;
 use App\Models\ResourceCategory;
 use App\Models\ResourceImage;
 use App\Models\User;
+use App\Services\ResourceGallery;
 use Tests\TestCase;
 
 class ResourceTest extends TestCase
@@ -147,6 +148,11 @@ class ResourceTest extends TestCase
         $this->assertCount(1, $images);
         $this->assertEquals($image->id, $images[0]->id);
         $this->assertInstanceOf(ResourceImage::class, $images[0]);
+    }
+
+    public function test_gallery_should_return_the_resource_gallery(): void
+    {
+        $this->assertInstanceOf(ResourceGallery::class, $this->resource->gallery());
     }
 
     public function test_has_reservations(): void
