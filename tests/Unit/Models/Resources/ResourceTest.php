@@ -150,6 +150,12 @@ class ResourceTest extends TestCase
         $this->assertInstanceOf(ResourceImage::class, $images[0]);
     }
 
+    public function test_status_label(): void
+    {
+        $this->assertSame('Ativo', $this->resource->statusLabel());
+        $this->assertSame('Inativo', $this->newResource(['active' => 0])->statusLabel());
+    }
+
     public function test_gallery_should_return_the_resource_gallery(): void
     {
         $this->assertInstanceOf(ResourceGallery::class, $this->resource->gallery());

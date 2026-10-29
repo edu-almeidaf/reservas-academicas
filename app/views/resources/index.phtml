@@ -1,0 +1,26 @@
+<?php if (empty($resources)) : ?>
+    <p>Nenhum recurso cadastrado.</p>
+<?php else : ?>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Situação</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($resources as $resource) : ?>
+                <tr>
+                    <td>
+                        <a href="<?= route('resources.show', ['id' => $resource->id]) ?>">
+                            <?= htmlspecialchars($resource->name) ?>
+                        </a>
+                    </td>
+                    <td><?= htmlspecialchars($categories[$resource->resource_category_id] ?? '') ?></td>
+                    <td><?= $resource->statusLabel() ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+<?php endif; ?>
