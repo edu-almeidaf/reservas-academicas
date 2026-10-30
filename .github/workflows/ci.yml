@@ -33,6 +33,10 @@ jobs:
       - name: PHPUnit Units test
         run: ./run test tests/Unit
 
+      # The unit tests create the uploads folders as root; the web container must be able to write there
+      - name: Reset Uploads assets permissions
+        run: sudo chown -R www-data:www-data public/assets/uploads
+
       - name: Integration Tests
         run: ./run test tests/Integration
 
@@ -53,6 +57,9 @@ jobs:
 
       - name: Generate Codeception files
         run: ./run codecept build
+
+      - name: Setup Uploads assets permissions
+        run: sudo chown -R www-data:www-data public/assets/uploads
 
       - name: Up containers
         run: ./run up -d
