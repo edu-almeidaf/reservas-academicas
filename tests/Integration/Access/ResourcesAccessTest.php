@@ -53,6 +53,7 @@ class ResourcesAccessTest extends TestCase
         return [
             'index' => ['GET', '/resources'],
             'show' => ['GET', '/resources/1'],
+            'images.create' => ['POST', '/resources/1/images'],
         ];
     }
 
