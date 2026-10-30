@@ -64,6 +64,7 @@ class ResourcesAccessTest extends TestCase
     public static function adminRoutesProvider(): array
     {
         return self::adminPagesProvider() + [
+            'destroy' => ['DELETE', '/resources/1'],
             'images.destroy' => ['DELETE', '/resources/1/images/1'],
         ];
     }
@@ -113,6 +114,15 @@ class ResourcesAccessTest extends TestCase
         $this->assertEquals(302, $response->getStatusCode());
         $this->assertEquals('/resources/1', $response->getHeaderLine('Location'));
         $this->assertNull(ResourceImage::findById($image->id));
+    }
+
+    public function test_admin_should_remove_the_resource(): void
+    {
+        $response = $this->client->delete('/resources/1', ['cookies' => $this->login(User::PROFILE_ADMIN)]);
+
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('/resources', $response->getHeaderLine('Location'));
+        $this->assertNull(Resource::findById(1));
     }
 
     public function test_nonexistent_resource_should_be_not_found(): void
