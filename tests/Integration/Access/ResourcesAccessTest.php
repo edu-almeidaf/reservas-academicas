@@ -4,6 +4,7 @@ namespace Tests\Integration\Access;
 
 use App\Models\Resource;
 use App\Models\ResourceCategory;
+use App\Models\ResourceImage;
 use App\Models\User;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
@@ -48,12 +49,22 @@ class ResourcesAccessTest extends TestCase
     /**
      * @return array<string, array{0: string, 1: string}>
      */
-    public static function adminRoutesProvider(): array
+    public static function adminPagesProvider(): array
     {
         return [
             'index' => ['GET', '/resources'],
             'show' => ['GET', '/resources/1'],
             'images.create' => ['POST', '/resources/1/images'],
+        ];
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function adminRoutesProvider(): array
+    {
+        return self::adminPagesProvider() + [
+            'images.destroy' => ['DELETE', '/resources/1/images/1'],
         ];
     }
 
@@ -77,12 +88,31 @@ class ResourcesAccessTest extends TestCase
         }
     }
 
-    #[DataProvider('adminRoutesProvider')]
+    #[DataProvider('adminPagesProvider')]
     public function test_admin_should_access_the_route(string $method, string $uri): void
     {
         $response = $this->client->request($method, $uri, ['cookies' => $this->login(User::PROFILE_ADMIN)]);
 
         $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function test_admin_should_remove_the_image(): void
+    {
+        $image = new ResourceImage([
+            'resource_id' => 1,
+            'file_path' => 'resources/1/9f2c4be1a07d43e6.jpg',
+            'mime_type' => 'image/jpeg',
+        ]);
+        $image->save();
+
+        $response = $this->client->delete(
+            "/resources/1/images/{$image->id}",
+            ['cookies' => $this->login(User::PROFILE_ADMIN)]
+        );
+
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('/resources/1', $response->getHeaderLine('Location'));
+        $this->assertNull(ResourceImage::findById($image->id));
     }
 
     public function test_nonexistent_resource_should_be_not_found(): void

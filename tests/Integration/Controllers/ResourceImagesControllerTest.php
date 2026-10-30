@@ -147,6 +147,109 @@ class ResourceImagesControllerTest extends ControllerTestCase
         }
     }
 
+    public function test_destroy_image(): void
+    {
+        $image = $this->createImage($this->resource);
+
+        $response = $this->post(
+            action: 'destroy',
+            controllerName: self::CONTROLLER,
+            params: ['resource_id' => (string) $this->resource->id, 'id' => (string) $image->id]
+        );
+
+        $this->assertEquals("Location: /resources/{$this->resource->id}", $response);
+        $this->assertEquals('Imagem removida com sucesso!', $_SESSION['flash']['success']);
+        $this->assertNull(ResourceImage::findById($image->id));
+        $this->assertFileDoesNotExist($image->absolutePath());
+    }
+
+    public function test_destroy_image_from_another_resource_is_not_found(): void
+    {
+        $otherResource = new Resource([
+            'resource_category_id' => $this->resource->resource_category_id,
+            'name' => 'Laboratório de Eletrônica',
+            'active' => 1,
+        ]);
+        $otherResource->save();
+        $image = $this->createImage($otherResource);
+
+        $this->assertDestroyNotFound((string) $this->resource->id, (string) $image->id);
+
+        $this->assertNotNull(ResourceImage::findById($image->id));
+        $this->assertFileExists($image->absolutePath());
+
+        $otherResource->gallery()->clear();
+    }
+
+    /**
+     * @return array<string, array{0: string}>
+     */
+    public static function invalidImageIdsProvider(): array
+    {
+        return [
+            'nonexistent' => ['999'],
+            'not numeric' => ['abc'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('invalidImageIdsProvider')]
+    public function test_destroy_invalid_image_is_not_found(string $id): void
+    {
+        $this->assertDestroyNotFound((string) $this->resource->id, $id);
+    }
+
+    public function test_destroy_image_of_invalid_resource_is_not_found(): void
+    {
+        $image = $this->createImage($this->resource);
+
+        try {
+            $this->post(
+                action: 'destroy',
+                controllerName: self::CONTROLLER,
+                params: ['resource_id' => '999', 'id' => (string) $image->id]
+            );
+            $this->fail('Expected HTTPException');
+        } catch (HTTPException $e) {
+            $this->assertEquals(404, $e->getStatusCode());
+            $this->assertEquals('Recurso não encontrado', $e->getMessage());
+        }
+
+        $this->assertNotNull(ResourceImage::findById($image->id));
+    }
+
+    private function assertDestroyNotFound(string $resourceId, string $imageId): void
+    {
+        try {
+            $this->post(
+                action: 'destroy',
+                controllerName: self::CONTROLLER,
+                params: ['resource_id' => $resourceId, 'id' => $imageId]
+            );
+            $this->fail('Expected HTTPException');
+        } catch (HTTPException $e) {
+            $this->assertEquals(404, $e->getStatusCode());
+            $this->assertEquals('Imagem não encontrada', $e->getMessage());
+        }
+    }
+
+    private function createImage(Resource $resource): ResourceImage
+    {
+        /** @var ResourceImage $image */
+        $image = $resource->images()->new([
+            'file_path' => "resources/{$resource->id}/9f2c4be1a07d43e6.jpg",
+            'mime_type' => 'image/jpeg',
+        ]);
+        $image->save();
+
+        $directory = dirname($image->absolutePath());
+        if (!is_dir($directory)) {
+            mkdir(directory: $directory, recursive: true);
+        }
+        copy((string) Constants::rootPath()->join('tests/files/resource_image.jpg'), $image->absolutePath());
+
+        return $image;
+    }
+
     private function assertUploadRejected(string $response, string $error): void
     {
         $this->assertStringNotContainsString('Location:', $response);

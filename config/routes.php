@@ -55,4 +55,6 @@ Route::middleware('admin')->group(function () {
     // Resource images
     Route::post('/resources/{resource_id}/images', [ResourceImagesController::class, 'create'])
         ->name('resource_images.create');
+    Route::delete('/resources/{resource_id}/images/{id}', [ResourceImagesController::class, 'destroy'])
+        ->name('resource_images.destroy');
 });
