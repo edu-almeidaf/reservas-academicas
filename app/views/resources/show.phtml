@@ -46,4 +46,9 @@
 
 <div class="d-flex gap-2">
     <a href="<?= route('resources.index') ?>" class="btn btn-outline-secondary">Voltar</a>
+    <form action="<?= route('resources.destroy', ['id' => $resource->id]) ?>" method="POST" class="d-inline"
+        onsubmit="return confirm('Deseja remover este recurso e todas as suas imagens?')">
+        <input type="hidden" name="_method" value="DELETE">
+        <button type="submit" class="btn btn-outline-danger">Remover recurso</button>
+    </form>
 </div>

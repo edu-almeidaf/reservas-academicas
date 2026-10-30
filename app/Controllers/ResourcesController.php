@@ -8,6 +8,7 @@ use App\Models\ResourceImage;
 use Core\Exceptions\HTTPException;
 use Core\Http\Controllers\Controller;
 use Core\Http\Request;
+use Lib\FlashMessage;
 
 class ResourcesController extends Controller
 {
@@ -27,6 +28,26 @@ class ResourcesController extends Controller
         $newImage = $resource->images()->new();
 
         $this->render('resources/show', self::galleryData($resource, $newImage));
+    }
+
+    public function destroy(Request $request): void
+    {
+        $resource = $this->findResource($request);
+
+        if ($resource->hasReservations()) {
+            FlashMessage::danger('Não é possível remover um recurso que já foi usado em reservas.');
+            $this->redirectTo(route('resources.show', ['id' => $resource->id]));
+            return;
+        }
+
+        if ($resource->destroy()) {
+            $resource->gallery()->clear();
+            FlashMessage::success('Recurso removido com sucesso!');
+        } else {
+            FlashMessage::danger('Não foi possível remover o recurso.');
+        }
+
+        $this->redirectTo(route('resources.index'));
     }
 
     /**

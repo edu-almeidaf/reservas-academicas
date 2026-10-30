@@ -51,6 +51,7 @@ Route::middleware('admin')->group(function () {
     // Resources
     Route::get('/resources', [ResourcesController::class, 'index'])->name('resources.index');
     Route::get('/resources/{id}', [ResourcesController::class, 'show'])->name('resources.show');
+    Route::delete('/resources/{id}', [ResourcesController::class, 'destroy'])->name('resources.destroy');
 
     // Resource images
     Route::post('/resources/{resource_id}/images', [ResourceImagesController::class, 'create'])
