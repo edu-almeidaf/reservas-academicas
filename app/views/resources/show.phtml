@@ -27,6 +27,18 @@
     </div>
 <?php endif; ?>
 
+<form action="<?= route('resource_images.create', ['resource_id' => $resource->id]) ?>" method="POST"
+    enctype="multipart/form-data" class="mb-3" novalidate>
+    <div class="form-group mb-3">
+        <label for="resource_image" class="form-label">Nova imagem</label>
+        <input id="resource_image" type="file" name="resource_image" accept="<?= implode(',', $acceptedMimeTypes) ?>"
+            class="form-control <?= $newImage->errors('image') ? 'is-invalid' : '' ?>" aria-describedby="resource_image_help">
+        <div class="invalid-feedback"><?= $newImage->errors('image') ?></div>
+        <div id="resource_image_help" class="form-text">JPEG ou PNG, até 2 MB.</div>
+    </div>
+    <button type="submit" class="btn btn-primary">Enviar imagem</button>
+</form>
+
 <div class="d-flex gap-2">
     <a href="<?= route('resources.index') ?>" class="btn btn-outline-secondary">Voltar</a>
 </div>
