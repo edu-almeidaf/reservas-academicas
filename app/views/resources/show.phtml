@@ -22,6 +22,11 @@
         <?php foreach ($images as $image) : ?>
             <div class="col">
                 <img src="<?= $image->url() ?>" alt="<?= htmlspecialchars($resource->name) ?>" class="img-thumbnail">
+                <form action="<?= route('resource_images.destroy', ['resource_id' => $resource->id, 'id' => $image->id]) ?>"
+                    method="POST" class="m-0" onsubmit="return confirm('Deseja remover esta imagem?')">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-link text-danger p-0">Remover</button>
+                </form>
             </div>
         <?php endforeach; ?>
     </div>

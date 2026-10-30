@@ -36,6 +36,20 @@ class ResourceImagesController extends Controller
         $this->render('resources/show', ResourcesController::galleryData($resource, $image));
     }
 
+    public function destroy(Request $request): void
+    {
+        $resource = $this->findResource($request);
+        $image = $this->findImage($resource, $request);
+
+        if ($resource->gallery()->remove($image)) {
+            FlashMessage::success('Imagem removida com sucesso!');
+        } else {
+            FlashMessage::danger('Não foi possível remover a imagem.');
+        }
+
+        $this->redirectTo(route('resources.show', ['id' => $resource->id]));
+    }
+
     private function findResource(Request $request): Resource
     {
         $id = $request->getParam('resource_id');
@@ -46,6 +60,18 @@ class ResourceImagesController extends Controller
         }
 
         return $resource;
+    }
+
+    private function findImage(Resource $resource, Request $request): ResourceImage
+    {
+        $id = $request->getParam('id');
+        $image = is_string($id) && ctype_digit($id) ? $resource->images()->findById((int) $id) : null;
+
+        if (!$image instanceof ResourceImage) {
+            throw new HTTPException('Imagem não encontrada', 404);
+        }
+
+        return $image;
     }
 
     /**
