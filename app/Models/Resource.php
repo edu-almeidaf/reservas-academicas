@@ -16,6 +16,7 @@ use Lib\Validations;
  * @property int $active
  * @property ResourceCategory $category
  * @property ResourceImage[] $images
+ * @property Subdivision[] $subdivisions
  */
 class Resource extends Model
 {
@@ -30,6 +31,25 @@ class Resource extends Model
     public function images(): HasMany
     {
         return $this->hasMany(ResourceImage::class, 'resource_id');
+    }
+
+    public function subdivisions(): HasMany
+    {
+        return $this->hasMany(Subdivision::class, 'resource_id');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function activeSubdivisionOptions(): array
+    {
+        $options = [];
+        foreach (Subdivision::where(['resource_id' => $this->id, 'active' => 1]) as $subdivision) {
+            $options[$subdivision->id] = $subdivision->name;
+        }
+        asort($options);
+
+        return $options;
     }
 
     public function gallery(): ResourceGallery
