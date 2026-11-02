@@ -232,4 +232,154 @@ class ReservationTest extends TestCase
         $this->assertInstanceOf(Subdivision::class, $subdivisions[0]);
         $this->assertEquals('Bancada 2', $subdivisions[0]->name);
     }
+
+    /**
+     * @return int[] ids of the active subdivisions "Bancada 1" and "Bancada 2" of the fixture resource
+     */
+    private function createSubdivisions(): array
+    {
+        $ids = [];
+        foreach (['Bancada 1', 'Bancada 2'] as $name) {
+            $subdivision = new Subdivision(['resource_id' => $this->resource->id, 'name' => $name]);
+            $subdivision->save();
+            $ids[] = $subdivision->id;
+        }
+
+        return $ids;
+    }
+
+    public function test_save_should_link_the_given_subdivisions(): void
+    {
+        $ids = $this->createSubdivisions();
+
+        $reservation = $this->newReservation(['subdivision_ids' => $ids]);
+
+        $this->assertTrue($reservation->save());
+        $this->assertSame($ids, $reservation->subdivisionIds());
+        $this->assertCount(2, $reservation->subdivisions()->get());
+    }
+
+    public function test_save_should_replace_and_remove_the_linked_subdivisions(): void
+    {
+        [$first, $second] = $this->createSubdivisions();
+        $reservation = $this->newReservation(['subdivision_ids' => [$first]]);
+        $reservation->save();
+
+        $reservation->subdivision_ids = [$second];
+        $this->assertTrue($reservation->save());
+        $this->assertSame([$second], $reservation->subdivisionIds());
+
+        $reservation->subdivision_ids = [];
+        $this->assertTrue($reservation->save());
+        $this->assertSame([], $reservation->subdivisionIds());
+        $this->assertCount(0, ReservationSubdivision::all());
+    }
+
+    public function test_save_without_subdivision_ids_should_keep_the_linked_subdivisions(): void
+    {
+        $ids = $this->createSubdivisions();
+        $reservation = $this->newReservation(['subdivision_ids' => $ids]);
+        $reservation->save();
+
+        $found = Reservation::findById($reservation->id);
+        $found->loadSchedule();
+        $found->motive = 'Motivo atualizado';
+
+        $this->assertNull($found->subdivision_ids);
+        $this->assertTrue($found->save());
+        $this->assertSame($ids, $found->subdivisionIds());
+    }
+
+    public function test_save_should_ignore_repeated_subdivision_ids(): void
+    {
+        [$first] = $this->createSubdivisions();
+
+        $reservation = $this->newReservation(['subdivision_ids' => [$first, $first]]);
+
+        $this->assertTrue($reservation->save());
+        $this->assertSame([$first], $reservation->subdivisionIds());
+    }
+
+    public function test_load_subdivisions_should_fill_subdivision_ids(): void
+    {
+        $ids = $this->createSubdivisions();
+        $reservation = $this->newReservation(['subdivision_ids' => $ids]);
+        $reservation->save();
+
+        $found = Reservation::findById($reservation->id);
+        $found->loadSubdivisions();
+
+        $this->assertSame($ids, $found->subdivision_ids);
+        $this->assertSame([], $this->newReservation()->subdivisionIds());
+    }
+
+    /**
+     * @return array<string, array{0: mixed}>
+     */
+    public static function malformedSubdivisionIdsProvider(): array
+    {
+        return [
+            'string' => ['1,2'],
+            'string inside the list' => [['1']],
+            'list inside the list' => [[[1]]],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('malformedSubdivisionIdsProvider')]
+    public function test_errors_should_return_malformed_subdivision_ids_error(mixed $subdivisionIds): void
+    {
+        $reservation = $this->newReservation(['subdivision_ids' => $subdivisionIds]);
+
+        $this->assertFalse($reservation->save());
+        $this->assertEquals('não é um valor válido!', $reservation->errors('subdivision_ids'));
+    }
+
+    public function test_errors_should_return_invalid_subdivision_error(): void
+    {
+        $otherResource = new Resource([
+            'resource_category_id' => $this->resource->resource_category_id,
+            'name' => 'Laboratório 2',
+            'active' => 1,
+        ]);
+        $otherResource->save();
+        $fromOtherResource = new Subdivision(['resource_id' => $otherResource->id, 'name' => 'Bancada 1']);
+        $fromOtherResource->save();
+        $inactive = new Subdivision(['resource_id' => $this->resource->id, 'name' => 'Bancada 3', 'active' => 0]);
+        $inactive->save();
+
+        foreach ([999, $fromOtherResource->id, $inactive->id] as $subdivisionId) {
+            $reservation = $this->newReservation(['subdivision_ids' => [$subdivisionId]]);
+
+            $this->assertFalse($reservation->save(), (string) $subdivisionId);
+            $this->assertEquals('não é um valor válido!', $reservation->errors('subdivision_ids'));
+        }
+
+        $this->assertCount(0, Reservation::all());
+        $this->assertCount(0, ReservationSubdivision::all());
+    }
+
+    public function test_destroy_should_remove_the_linked_subdivisions(): void
+    {
+        $ids = $this->createSubdivisions();
+        $reservation = $this->newReservation(['subdivision_ids' => $ids]);
+        $reservation->save();
+
+        $this->assertTrue($reservation->destroy());
+        $this->assertCount(0, ReservationSubdivision::all());
+        $this->assertCount(2, Subdivision::all());
+    }
+
+    public function test_errors_should_return_conflict_error_for_a_shared_subdivision(): void
+    {
+        [$first, $second] = $this->createSubdivisions();
+        $existing = $this->newReservation(['subdivision_ids' => [$first]]);
+        $existing->save();
+
+        $sameSubdivision = $this->newReservation(['subdivision_ids' => [$first, $second]]);
+        $otherSubdivision = $this->newReservation(['subdivision_ids' => [$second]]);
+
+        $this->assertFalse($sameSubdivision->save());
+        $this->assertEquals('Horário indisponível para reserva.', $sameSubdivision->errors('start_time'));
+        $this->assertTrue($otherSubdivision->save());
+    }
 }

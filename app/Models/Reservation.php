@@ -24,6 +24,7 @@ use Lib\Validations;
  * @property string|null $scheduled_date
  * @property string|null $start_time
  * @property string|null $end_time
+ * @property int[]|mixed|null $subdivision_ids
  * @property User $user
  * @property Resource $resource
  * @property ReservationCategory $category
@@ -45,6 +46,7 @@ class Reservation extends Model
     ];
 
     private const SCHEDULE_FIELDS = ['scheduled_date', 'start_time', 'end_time'];
+    private const SUBDIVISIONS_FIELD = 'subdivision_ids';
 
     protected static string $table = 'reservations';
     protected static array $columns = [
@@ -64,6 +66,9 @@ class Reservation extends Model
     /** @var array<string, string|null> */
     private array $schedule = [];
 
+    // null keeps the saved subdivisions; an empty list means the whole resource
+    private mixed $selectedSubdivisions = null;
+
     /**
      * @param array<string, mixed> $params
      */
@@ -82,6 +87,10 @@ class Reservation extends Model
             return $this->schedule[$property] ?? null;
         }
 
+        if ($property === self::SUBDIVISIONS_FIELD) {
+            return $this->selectedSubdivisions;
+        }
+
         return parent::__get($property);
     }
 
@@ -89,6 +98,11 @@ class Reservation extends Model
     {
         if (in_array($property, self::SCHEDULE_FIELDS, true)) {
             $this->schedule[$property] = $value;
+            return;
+        }
+
+        if ($property === self::SUBDIVISIONS_FIELD) {
+            $this->selectedSubdivisions = $value;
             return;
         }
 
@@ -129,6 +143,7 @@ class Reservation extends Model
         if ($this->errors('resource_id') === null && Validations::existsIn('resource_id', Resource::class, $this)) {
             $this->validatesActiveResource();
         }
+        $this->validatesSubdivisions();
 
         Validations::notEmpty('reservation_category_id', $this);
         Validations::existsIn('reservation_category_id', ReservationCategory::class, $this);
@@ -162,6 +177,29 @@ class Reservation extends Model
         $this->end_time = substr($schedule->end_time, 0, 5);
     }
 
+    public function loadSubdivisions(): void
+    {
+        $this->subdivision_ids = $this->subdivisionIds();
+    }
+
+    /**
+     * @return int[]
+     */
+    public function subdivisionIds(): array
+    {
+        if ($this->newRecord()) {
+            return [];
+        }
+
+        $ids = array_map(
+            fn (ReservationSubdivision $link) => $link->subdivision_id,
+            ReservationSubdivision::where(['reservation_id' => $this->id])
+        );
+        sort($ids);
+
+        return $ids;
+    }
+
     public function save(): bool
     {
         if (!parent::save()) {
@@ -173,7 +211,30 @@ class Reservation extends Model
         $schedule->start_time = $this->start_time;
         $schedule->end_time = $this->end_time;
 
-        return $schedule->save();
+        return $schedule->save() && $this->saveSubdivisions();
+    }
+
+    private function saveSubdivisions(): bool
+    {
+        if ($this->subdivision_ids === null) {
+            return true;
+        }
+
+        $wanted = array_values(array_unique($this->subdivision_ids));
+        $current = $this->subdivisionIds();
+
+        foreach (array_diff($wanted, $current) as $subdivisionId) {
+            $link = new ReservationSubdivision(['reservation_id' => $this->id, 'subdivision_id' => $subdivisionId]);
+            if (!$link->save()) {
+                return false;
+            }
+        }
+
+        foreach (array_diff($current, $wanted) as $subdivisionId) {
+            ReservationSubdivision::findBy(['reservation_id' => $this->id, 'subdivision_id' => $subdivisionId])?->destroy();
+        }
+
+        return true;
     }
 
     private function currentSchedule(): ?ReservationSchedule
@@ -194,6 +255,29 @@ class Reservation extends Model
 
         if ($resource !== null && !$resource->isActive()) {
             $this->addError('resource_id', 'não está disponível para reservas!');
+        }
+    }
+
+    private function validatesSubdivisions(): void
+    {
+        $ids = $this->subdivision_ids;
+
+        if ($ids === null) {
+            return;
+        }
+
+        if (!is_array($ids) || array_filter($ids, fn ($id) => !is_int($id)) !== []) {
+            $this->addError(self::SUBDIVISIONS_FIELD, 'não é um valor válido!');
+            return;
+        }
+
+        $resource = $this->errors('resource_id') === null ? Resource::findById($this->resource_id) : null;
+        if ($resource === null) {
+            return;
+        }
+
+        if (array_diff($ids, array_keys($resource->activeSubdivisionOptions())) !== []) {
+            $this->addError(self::SUBDIVISIONS_FIELD, 'não é um valor válido!');
         }
     }
 
@@ -219,7 +303,7 @@ class Reservation extends Model
 
     private function hasValidScheduleFields(): bool
     {
-        foreach (['resource_id', 'scheduled_date', 'start_time', 'end_time'] as $field) {
+        foreach (['resource_id', self::SUBDIVISIONS_FIELD, 'scheduled_date', 'start_time', 'end_time'] as $field) {
             if ($this->errors($field) !== null) {
                 return false;
             }
@@ -235,6 +319,7 @@ class Reservation extends Model
             $this->scheduled_date,
             $this->start_time,
             $this->end_time,
+            $this->subdivision_ids ?? $this->subdivisionIds(),
             $this->newRecord() ? null : $this->id
         );
     }

@@ -34,11 +34,17 @@ class ReservationSchedule extends Model
         Validations::notEmpty('end_time', $this);
     }
 
+    /**
+     * An empty list of subdivisions means the whole resource, which conflicts with any reservation of it
+     *
+     * @param int[] $subdivisionIds
+     */
     public static function hasConflict(
         int $resourceId,
         string $date,
         string $start,
         string $end,
+        array $subdivisionIds = [],
         ?int $exceptReservationId = null
     ): bool {
         $sql = <<<SQL
@@ -55,6 +61,24 @@ class ReservationSchedule extends Model
             $sql .= ' AND r.id <> :except_id';
         }
 
+        $subdivisionParams = [];
+        foreach (array_values($subdivisionIds) as $index => $subdivisionId) {
+            $subdivisionParams["subdivision_{$index}"] = $subdivisionId;
+        }
+
+        if ($subdivisionParams !== []) {
+            $placeholders = implode(', ', array_map(fn ($param) => ":{$param}", array_keys($subdivisionParams)));
+            $sql .= <<<SQL
+                 AND (
+                    NOT EXISTS (SELECT 1 FROM reservation_subdivision rs WHERE rs.reservation_id = r.id)
+                    OR EXISTS (
+                        SELECT 1 FROM reservation_subdivision rs
+                        WHERE rs.reservation_id = r.id AND rs.subdivision_id IN ({$placeholders})
+                    )
+                 )
+            SQL;
+        }
+
         $stmt = Database::getDatabaseConn()->prepare($sql);
         $stmt->bindValue('resource_id', $resourceId, PDO::PARAM_INT);
         $stmt->bindValue('pending', Reservation::STATUS_PENDING);
@@ -65,6 +89,10 @@ class ReservationSchedule extends Model
 
         if ($exceptReservationId !== null) {
             $stmt->bindValue('except_id', $exceptReservationId, PDO::PARAM_INT);
+        }
+
+        foreach ($subdivisionParams as $param => $subdivisionId) {
+            $stmt->bindValue($param, $subdivisionId, PDO::PARAM_INT);
         }
 
         $stmt->execute();
