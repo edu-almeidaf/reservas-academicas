@@ -4,7 +4,9 @@ namespace Tests\Unit\Models\Reservations;
 
 use App\Models\Reservation;
 use App\Models\ReservationSchedule;
+use App\Models\ReservationSubdivision;
 use App\Models\Resource;
+use App\Models\Subdivision;
 use Tests\TestCase;
 
 class ReservationTest extends TestCase
@@ -207,5 +209,27 @@ class ReservationTest extends TestCase
 
         $this->assertCount(0, Reservation::all());
         $this->assertCount(0, ReservationSchedule::all());
+    }
+
+    public function test_subdivisions_should_return_only_the_linked_subdivisions(): void
+    {
+        $reservation = $this->newReservation();
+        $reservation->save();
+
+        foreach (['Bancada 1', 'Bancada 2'] as $name) {
+            $subdivision = new Subdivision(['resource_id' => $this->resource->id, 'name' => $name]);
+            $subdivision->save();
+        }
+        $link = new ReservationSubdivision([
+            'reservation_id' => $reservation->id,
+            'subdivision_id' => Subdivision::findBy(['name' => 'Bancada 2'])->id,
+        ]);
+        $link->save();
+
+        $subdivisions = $reservation->subdivisions()->get();
+
+        $this->assertCount(1, $subdivisions);
+        $this->assertInstanceOf(Subdivision::class, $subdivisions[0]);
+        $this->assertEquals('Bancada 2', $subdivisions[0]->name);
     }
 }
