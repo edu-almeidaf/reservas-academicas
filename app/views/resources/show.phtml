@@ -1,0 +1,54 @@
+<div class="card mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Categoria</dt>
+            <dd class="col-sm-9"><?= htmlspecialchars($category->name) ?></dd>
+
+            <dt class="col-sm-3">Descrição</dt>
+            <dd class="col-sm-9"><?= nl2br(htmlspecialchars($resource->description ?? '')) ?></dd>
+
+            <dt class="col-sm-3">Situação</dt>
+            <dd class="col-sm-9"><?= $resource->statusLabel() ?></dd>
+        </dl>
+    </div>
+</div>
+
+<h2 class="h4">Imagens</h2>
+
+<?php if (empty($images)) : ?>
+    <p>Nenhuma imagem cadastrada.</p>
+<?php else : ?>
+    <div class="row row-cols-2 row-cols-md-4 g-3 mb-3">
+        <?php foreach ($images as $image) : ?>
+            <div class="col">
+                <img src="<?= $image->url() ?>" alt="<?= htmlspecialchars($resource->name) ?>" class="img-thumbnail">
+                <form action="<?= route('resource_images.destroy', ['resource_id' => $resource->id, 'id' => $image->id]) ?>"
+                    method="POST" class="m-0" onsubmit="return confirm('Deseja remover esta imagem?')">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-link text-danger p-0">Remover</button>
+                </form>
+            </div>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
+
+<form action="<?= route('resource_images.create', ['resource_id' => $resource->id]) ?>" method="POST"
+    enctype="multipart/form-data" class="mb-3" novalidate>
+    <div class="form-group mb-3">
+        <label for="resource_image" class="form-label">Nova imagem</label>
+        <input id="resource_image" type="file" name="resource_image" accept="<?= implode(',', $acceptedMimeTypes) ?>"
+            class="form-control <?= $newImage->errors('image') ? 'is-invalid' : '' ?>" aria-describedby="resource_image_help">
+        <div class="invalid-feedback"><?= $newImage->errors('image') ?></div>
+        <div id="resource_image_help" class="form-text">JPEG ou PNG, até 2 MB.</div>
+    </div>
+    <button type="submit" class="btn btn-primary">Enviar imagem</button>
+</form>
+
+<div class="d-flex gap-2">
+    <a href="<?= route('resources.index') ?>" class="btn btn-outline-secondary">Voltar</a>
+    <form action="<?= route('resources.destroy', ['id' => $resource->id]) ?>" method="POST" class="d-inline"
+        onsubmit="return confirm('Deseja remover este recurso e todas as suas imagens?')">
+        <input type="hidden" name="_method" value="DELETE">
+        <button type="submit" class="btn btn-outline-danger">Remover recurso</button>
+    </form>
+</div>

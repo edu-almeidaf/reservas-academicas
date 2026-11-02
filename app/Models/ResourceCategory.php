@@ -26,4 +26,18 @@ class ResourceCategory extends Model
         Validations::notEmpty('name', $this);
         Validations::uniqueness('name', $this);
     }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function options(): array
+    {
+        $options = [];
+        foreach (self::all() as $category) {
+            $options[$category->id] = $category->name;
+        }
+        asort($options);
+
+        return $options;
+    }
 }
