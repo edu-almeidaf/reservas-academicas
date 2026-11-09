@@ -25,7 +25,17 @@ services:
     networks:
       - app-network
     depends_on:
-      - db
+      db:
+        condition: service_started
+      uploads-permissions:
+        condition: service_completed_successfully
+
+  uploads-permissions:
+    image: alpine:3.20
+    volumes:
+      - ./public/assets/uploads:/uploads
+    # Creates the folder before the test runner (root) does and gives it to www-data (uid 33), which writes the uploads
+    command: sh -c "mkdir -p /uploads/resources && chown -R 33:33 /uploads"
 
   db:
     image: mysql:8.4.0
@@ -60,8 +70,12 @@ services:
     networks:
       - app-network
     depends_on:
-      - db
-      - selenium
+      db:
+        condition: service_started
+      selenium:
+        condition: service_started
+      uploads-permissions:
+        condition: service_completed_successfully
     environment:
       APP_ENV: testing
       DB_HOST: db

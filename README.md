@@ -101,12 +101,8 @@ administrativa), ou acesse [localhost/resources](http://localhost/resources). Na
 - **Remover o recurso** com todas as suas imagens, se ele nunca foi usado em reservas. Os recursos inativos
   (`Laboratório de Eletrônica` e `Projetor Multimídia 2`) não têm reservas no populate.
 
-As galerias começam vazias. Os arquivos ficam em `public/assets/uploads/resources/{id do recurso}/`, e o container web
-precisa de permissão de escrita nessa pasta:
-
-```
-$ sudo chown -R www-data:www-data public/assets/uploads
-```
+As galerias começam vazias. Os arquivos ficam em `public/assets/uploads/resources/{id do recurso}/`. A permissão de
+escrita nessa pasta é ajustada automaticamente quando os containers sobem.
 
 ### Testes
 
