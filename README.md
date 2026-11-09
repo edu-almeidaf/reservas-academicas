@@ -90,6 +90,24 @@ Além dos usuários, o populate cria:
 - as categorias de reserva;
 - 33 reservas futuras: 25 do discente (3 páginas na listagem, 2 delas já deferidas), 5 do docente e 3 do técnico.
 
+### Galeria de imagens dos recursos
+
+Só o técnico gerencia os recursos. Entre com `tecnico@utfpr.edu.br` e clique em **Recursos** (barra superior ou área
+administrativa), ou acesse [localhost/resources](http://localhost/resources). Na página de cada recurso é possível:
+
+- **Enviar** imagens JPEG ou PNG de até 2 MB, uma por vez. O tipo é conferido pelo conteúdo do arquivo, e o nome
+  gravado é gerado pelo sistema.
+- **Ver** as imagens já enviadas e **remover** uma delas (o registro e o arquivo).
+- **Remover o recurso** com todas as suas imagens, se ele nunca foi usado em reservas. Os recursos inativos
+  (`Laboratório de Eletrônica` e `Projetor Multimídia 2`) não têm reservas no populate.
+
+As galerias começam vazias. Os arquivos ficam em `public/assets/uploads/resources/{id do recurso}/`, e o container web
+precisa de permissão de escrita nessa pasta:
+
+```
+$ sudo chown -R www-data:www-data public/assets/uploads
+```
+
 ### Testes
 
 Testes unitários e de integração ([PHPUnit](https://phpunit.de/)):

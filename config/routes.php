@@ -4,6 +4,8 @@ use App\Controllers\AdminController;
 use App\Controllers\AuthenticationsController;
 use App\Controllers\HomeController;
 use App\Controllers\ReservationsController;
+use App\Controllers\ResourceImagesController;
+use App\Controllers\ResourcesController;
 use App\Controllers\StudentController;
 use App\Controllers\TeacherController;
 use App\Controllers\UsersController;
@@ -45,4 +47,15 @@ Route::middleware('teacher')->group(function () {
 
 Route::middleware('admin')->group(function () {
     Route::get('/admin', [AdminController::class, 'index'])->name('admin.home');
+
+    // Resources
+    Route::get('/resources', [ResourcesController::class, 'index'])->name('resources.index');
+    Route::get('/resources/{id}', [ResourcesController::class, 'show'])->name('resources.show');
+    Route::delete('/resources/{id}', [ResourcesController::class, 'destroy'])->name('resources.destroy');
+
+    // Resource images
+    Route::post('/resources/{resource_id}/images', [ResourceImagesController::class, 'create'])
+        ->name('resource_images.create');
+    Route::delete('/resources/{resource_id}/images/{id}', [ResourceImagesController::class, 'destroy'])
+        ->name('resource_images.destroy');
 });

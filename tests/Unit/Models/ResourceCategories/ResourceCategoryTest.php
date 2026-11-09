@@ -56,4 +56,15 @@ class ResourceCategoryTest extends TestCase
         $this->assertCount(1, $resources);
         $this->assertEquals($resource->id, $resources[0]->id);
     }
+
+    public function test_options_should_return_names_ordered_by_name(): void
+    {
+        $other = new ResourceCategory(['name' => 'Auditório']);
+        $other->save();
+
+        $this->assertSame(
+            [$other->id => 'Auditório', $this->category->id => 'Laboratório'],
+            ResourceCategory::options()
+        );
+    }
 }
