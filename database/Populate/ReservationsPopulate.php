@@ -41,6 +41,11 @@ class ReservationsPopulate
                     $reservation->status = Reservation::STATUS_APPROVED;
                 }
 
+                if ($user->isStudent() && $i % 2 === 1) {
+                    $subdivisionIds = array_keys(Resource::findById($reservation->resource_id)->activeSubdivisionOptions());
+                    $reservation->subdivision_ids = array_slice($subdivisionIds, 0, 1);
+                }
+
                 $reservation->save();
                 $numberOfReservations++;
             }
