@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Core\Database\ActiveRecord\BelongsTo;
+use Core\Database\ActiveRecord\BelongsToMany;
 use Core\Database\ActiveRecord\HasMany;
 use Core\Database\ActiveRecord\Model;
 use Lib\Validations;
@@ -27,6 +28,7 @@ use Lib\Validations;
  * @property Resource $resource
  * @property ReservationCategory $category
  * @property ReservationSchedule[] $schedules
+ * @property Subdivision[] $subdivisions
  */
 class Reservation extends Model
 {
@@ -111,6 +113,11 @@ class Reservation extends Model
     public function schedules(): HasMany
     {
         return $this->hasMany(ReservationSchedule::class, 'reservation_id');
+    }
+
+    public function subdivisions(): BelongsToMany
+    {
+        return $this->belongsToMany(Subdivision::class, 'reservation_subdivision', 'reservation_id', 'subdivision_id');
     }
 
     public function validates(): void
