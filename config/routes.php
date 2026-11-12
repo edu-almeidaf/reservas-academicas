@@ -7,6 +7,7 @@ use App\Controllers\ReservationsController;
 use App\Controllers\ResourceImagesController;
 use App\Controllers\ResourcesController;
 use App\Controllers\StudentController;
+use App\Controllers\SubdivisionsController;
 use App\Controllers\TeacherController;
 use App\Controllers\UsersController;
 use Core\Router\Route;
@@ -34,6 +35,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/reservations/{id}/edit', [ReservationsController::class, 'edit'])->name('reservations.edit');
     Route::put('/reservations/{id}', [ReservationsController::class, 'update'])->name('reservations.update');
     Route::delete('/reservations/{id}', [ReservationsController::class, 'destroy'])->name('reservations.destroy');
+
+    // Subdivisions
+    Route::get('/resources/{resource_id}/subdivisions', [SubdivisionsController::class, 'index'])
+        ->name('subdivisions.index');
 });
 
 // Areas
