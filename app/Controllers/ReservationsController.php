@@ -5,7 +5,9 @@ namespace App\Controllers;
 use App\Models\Reservation;
 use App\Models\ReservationCategory;
 use App\Models\ReservationSchedule;
+use App\Models\ReservationSubdivision;
 use App\Models\Resource;
+use App\Models\Subdivision;
 use Core\Exceptions\HTTPException;
 use Core\Http\Controllers\Controller;
 use Core\Http\Request;
@@ -26,21 +28,27 @@ class ReservationsController extends Controller
             route: 'reservations.paginate'
         );
         $reservations = $paginator->registers();
-        $schedules = ReservationSchedule::forReservations(
-            array_map(fn ($reservation) => $reservation->id, $reservations)
-        );
+        $reservationIds = array_map(fn ($reservation) => $reservation->id, $reservations);
+        $schedules = ReservationSchedule::forReservations($reservationIds);
+        $subdivisionNames = ReservationSubdivision::namesForReservations($reservationIds);
         $resources = Resource::options();
 
         $title = 'Minhas Reservas';
-        $this->render('reservations/index', compact('paginator', 'reservations', 'schedules', 'resources', 'title'));
+        $this->render(
+            'reservations/index',
+            compact('paginator', 'reservations', 'schedules', 'subdivisionNames', 'resources', 'title')
+        );
     }
 
     public function show(Request $request): void
     {
         $reservation = $this->findReservation($request);
+        /** @var Subdivision[] $subdivisions */
+        $subdivisions = $reservation->subdivisions()->get();
+        usort($subdivisions, fn ($first, $second) => strcmp($first->name, $second->name));
 
         $title = "Reserva #{$reservation->id}";
-        $this->render('reservations/show', compact('reservation', 'title'));
+        $this->render('reservations/show', compact('reservation', 'subdivisions', 'title'));
     }
 
     public function new(): void

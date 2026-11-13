@@ -108,4 +108,28 @@ class ReservationSubdivisionTest extends TestCase
 
         $this->subdivision->destroy();
     }
+
+    public function test_names_for_reservations_should_group_the_names_by_reservation(): void
+    {
+        $other = new Subdivision(['resource_id' => $this->resource->id, 'name' => 'Bancada 0']);
+        $other->save();
+        $this->newLink(['subdivision_id' => $other->id])->save();
+
+        $secondReservation = $this->newReservation(['start_time' => '10:00', 'end_time' => '11:00']);
+        $secondReservation->save();
+        $this->newLink(['reservation_id' => $secondReservation->id])->save();
+
+        $wholeResource = $this->newReservation(['start_time' => '11:00', 'end_time' => '12:00']);
+        $wholeResource->save();
+
+        $names = ReservationSubdivision::namesForReservations(
+            [$this->reservation->id, $secondReservation->id, $wholeResource->id]
+        );
+
+        $this->assertSame(
+            [$this->reservation->id => ['Bancada 0', 'Bancada 1'], $secondReservation->id => ['Bancada 1']],
+            $names
+        );
+        $this->assertSame([], ReservationSubdivision::namesForReservations([]));
+    }
 }

@@ -4,6 +4,7 @@ use App\Controllers\AdminController;
 use App\Controllers\AuthenticationsController;
 use App\Controllers\HomeController;
 use App\Controllers\ReservationsController;
+use App\Controllers\ReservationSubdivisionsController;
 use App\Controllers\ResourceImagesController;
 use App\Controllers\ResourcesController;
 use App\Controllers\StudentController;
@@ -35,6 +36,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/reservations/{id}/edit', [ReservationsController::class, 'edit'])->name('reservations.edit');
     Route::put('/reservations/{id}', [ReservationsController::class, 'update'])->name('reservations.update');
     Route::delete('/reservations/{id}', [ReservationsController::class, 'destroy'])->name('reservations.destroy');
+
+    // Reservation subdivisions
+    Route::delete(
+        '/reservations/{reservation_id}/subdivisions/{id}',
+        [ReservationSubdivisionsController::class, 'destroy']
+    )->name('reservation_subdivisions.destroy');
 
     // Subdivisions
     Route::get('/resources/{resource_id}/subdivisions', [SubdivisionsController::class, 'index'])
