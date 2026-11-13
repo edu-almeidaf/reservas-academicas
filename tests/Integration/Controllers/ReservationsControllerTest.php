@@ -676,4 +676,68 @@ class ReservationsControllerTest extends ControllerTestCase
 
         $this->assertStringContainsString('data-selected="' . htmlspecialchars(json_encode($ids)) . '"', $response);
     }
+
+    public function test_show_reservation_with_subdivisions(): void
+    {
+        [$first, $second] = $this->createSubdivisions();
+        $reservation = $this->newReservation(['subdivision_ids' => [$second, $first]]);
+        $reservation->save();
+
+        $response = $this->get(
+            action: 'show',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id]
+        );
+
+        $this->assertMatchesRegularExpression('/Bancada 1.*Bancada 2/s', $response);
+        $this->assertStringContainsString(
+            "action=\"/reservations/{$reservation->id}/subdivisions/{$first}\"",
+            $response
+        );
+        $this->assertStringNotContainsString('Recurso inteiro', $response);
+    }
+
+    public function test_show_reservation_of_the_whole_resource(): void
+    {
+        $reservation = $this->createReservation(1);
+
+        $response = $this->get(
+            action: 'show',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id]
+        );
+
+        $this->assertStringContainsString('Recurso inteiro', $response);
+    }
+
+    public function test_show_approved_reservation_without_remove_subdivision_button(): void
+    {
+        [$first] = $this->createSubdivisions();
+        $reservation = $this->newReservation(['subdivision_ids' => [$first]]);
+        $reservation->status = Reservation::STATUS_APPROVED;
+        $reservation->save();
+
+        $response = $this->get(
+            action: 'show',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id]
+        );
+
+        $this->assertStringContainsString('Bancada 1', $response);
+        $this->assertStringNotContainsString('/subdivisions/', $response);
+    }
+
+    public function test_list_with_the_subdivisions_column(): void
+    {
+        $ids = $this->createSubdivisions();
+        $withSubdivisions = $this->newReservation(['subdivision_ids' => $ids]);
+        $withSubdivisions->save();
+        $this->createReservation(2);
+
+        $response = $this->get(action: 'index', controllerName: 'App\Controllers\ReservationsController');
+
+        $this->assertStringContainsString('<th>Subdivisões</th>', $response);
+        $this->assertStringContainsString('<td>Bancada 1, Bancada 2</td>', $response);
+        $this->assertStringContainsString('<td>Recurso inteiro</td>', $response);
+    }
 }
