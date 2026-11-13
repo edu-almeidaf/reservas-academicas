@@ -16,6 +16,7 @@ class ReservationsController extends Controller
     private const PER_PAGE = 10;
     private const RESERVATION_TEXT_FIELDS = ['motive', 'scheduled_date', 'start_time', 'end_time'];
     private const RESERVATION_INTEGER_FIELDS = ['resource_id', 'reservation_category_id'];
+    private const SUBDIVISIONS_FIELD = 'subdivision_ids';
 
     public function index(Request $request): void
     {
@@ -121,7 +122,7 @@ class ReservationsController extends Controller
     }
 
     /**
-     * @param array<string, string|int> $attributes
+     * @param array<string, mixed> $attributes
      */
     private function newReservation(array $attributes): Reservation
     {
@@ -139,7 +140,7 @@ class ReservationsController extends Controller
     }
 
     /**
-     * @return array<string, string|int>
+     * @return array<string, mixed>
      */
     private function reservationAttributes(mixed $params): array
     {
@@ -160,7 +161,35 @@ class ReservationsController extends Controller
             }
         }
 
+        $attributes[self::SUBDIVISIONS_FIELD] = $this->subdivisionIds($params);
+
         return $attributes;
+    }
+
+    /**
+     * Unchecked checkboxes are not sent by the browser, so a missing field means the whole resource
+     *
+     * @param array<mixed> $params
+     * @return int[]|mixed the ids, or the raw value for the model to reject
+     */
+    private function subdivisionIds(array $params): mixed
+    {
+        if (!isset($params[self::SUBDIVISIONS_FIELD])) {
+            return [];
+        }
+
+        $ids = $params[self::SUBDIVISIONS_FIELD];
+        if (!is_array($ids)) {
+            return $ids;
+        }
+
+        foreach ($ids as $id) {
+            if (!is_string($id) || !ctype_digit($id)) {
+                return $ids;
+            }
+        }
+
+        return array_values(array_unique(array_map('intval', $ids)));
     }
 
     private function findReservation(Request $request): Reservation
@@ -175,6 +204,7 @@ class ReservationsController extends Controller
         }
 
         $reservation->loadSchedule();
+        $reservation->loadSubdivisions();
 
         return $reservation;
     }
