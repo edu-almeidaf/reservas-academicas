@@ -4,7 +4,9 @@ namespace Tests\Integration\Controllers;
 
 use App\Models\Reservation;
 use App\Models\ReservationSchedule;
+use App\Models\ReservationSubdivision;
 use App\Models\Resource;
+use App\Models\Subdivision;
 use Core\Exceptions\HTTPException;
 use Tests\Unit\Models\Reservations\ReservationFixtures;
 
@@ -532,5 +534,146 @@ class ReservationsControllerTest extends ControllerTestCase
             controllerName: 'App\Controllers\ReservationsController',
             params: ['id' => (string) $other->id, 'reservation' => ['motive' => 'Invasão']]
         );
+    }
+
+    /**
+     * @return int[] ids of "Bancada 1" and "Bancada 2" of the fixture resource
+     */
+    private function createSubdivisions(): array
+    {
+        $ids = [];
+        foreach (['Bancada 1', 'Bancada 2'] as $name) {
+            $subdivision = $this->resource->subdivisions()->new(['name' => $name]);
+            $subdivision->save();
+            $ids[] = $subdivision->id;
+        }
+
+        return $ids;
+    }
+
+    public function test_render_new_reservation_form_with_the_subdivisions_block(): void
+    {
+        $response = $this->get(action: 'new', controllerName: 'App\Controllers\ReservationsController');
+
+        $this->assertStringContainsString('id="reservation_subdivisions"', $response);
+        $this->assertStringContainsString('data-url-template="/resources/__resource_id__/subdivisions"', $response);
+        $this->assertStringContainsString('data-selected="[]"', $response);
+        $this->assertStringContainsString('<script src="/assets/js/reservation_subdivisions.js" defer></script>', $response);
+    }
+
+    public function test_successfully_create_reservation_with_subdivisions(): void
+    {
+        $ids = $this->createSubdivisions();
+
+        $response = $this->post(
+            action: 'create',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: $this->reservationParams(['subdivision_ids' => array_map('strval', $ids)])
+        );
+
+        $this->assertEquals('Location: /reservations', $response);
+        $reservation = Reservation::all()[0];
+        $this->assertSame($ids, $reservation->subdivisionIds());
+    }
+
+    public function test_create_reservation_without_subdivisions_is_for_the_whole_resource(): void
+    {
+        $this->createSubdivisions();
+
+        $this->post(
+            action: 'create',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: $this->reservationParams()
+        );
+
+        $this->assertCount(1, Reservation::all());
+        $this->assertCount(0, ReservationSubdivision::all());
+    }
+
+    public function test_unsuccessfully_create_reservation_with_subdivision_of_another_resource(): void
+    {
+        $otherResource = new Resource([
+            'resource_category_id' => $this->resource->resource_category_id,
+            'name' => 'Laboratório 2',
+            'active' => 1,
+        ]);
+        $otherResource->save();
+        $subdivision = $otherResource->subdivisions()->new(['name' => 'Bancada 1']);
+        $subdivision->save();
+
+        $response = $this->post(
+            action: 'create',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: $this->reservationParams(['subdivision_ids' => [(string) $subdivision->id]])
+        );
+
+        $this->assertStringNotContainsString('Location:', $response);
+        $this->assertStringContainsString('não é um valor válido!', $response);
+        $this->assertCount(0, Reservation::all());
+    }
+
+    /**
+     * @return array<string, array{0: mixed}>
+     */
+    public static function malformedSubdivisionIdsProvider(): array
+    {
+        return [
+            'string' => ['1,2'],
+            'not numeric item' => [['1', 'abc']],
+            'nested list' => [[['1']]],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('malformedSubdivisionIdsProvider')]
+    public function test_unsuccessfully_create_reservation_with_malformed_subdivision_ids(mixed $subdivisionIds): void
+    {
+        $this->createSubdivisions();
+
+        $response = $this->post(
+            action: 'create',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: $this->reservationParams(['subdivision_ids' => $subdivisionIds])
+        );
+
+        $this->assertStringNotContainsString('Location:', $response);
+        $this->assertStringContainsString('Existem dados incorretos! Por favor, verifique!', $response);
+        $this->assertMatchesRegularExpression('/data-subdivisions-list class="is-invalid"/', $response);
+        $this->assertCount(0, Reservation::all());
+    }
+
+    public function test_update_reservation_should_replace_and_remove_subdivisions(): void
+    {
+        [$first, $second] = $this->createSubdivisions();
+        $reservation = $this->newReservation(['subdivision_ids' => [$first]]);
+        $reservation->save();
+
+        $this->put(
+            action: 'update',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id] + $this->reservationParams(['subdivision_ids' => [(string) $second]])
+        );
+        $this->assertSame([$second], $reservation->subdivisionIds());
+
+        $this->put(
+            action: 'update',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id] + $this->reservationParams()
+        );
+        $this->assertSame([], $reservation->subdivisionIds());
+    }
+
+    public function test_render_edit_form_with_the_reservation_subdivisions(): void
+    {
+        $ids = $this->createSubdivisions();
+        $reservation = $this->newReservation(['subdivision_ids' => $ids]);
+        $reservation->save();
+
+        $response = $this->get(
+            action: 'edit',
+            controllerName: 'App\Controllers\ReservationsController',
+            params: ['id' => (string) $reservation->id]
+        );
+
+        $this->assertStringContainsString('data-selected="' . htmlspecialchars(json_encode($ids)) . '"', $response);
     }
 }

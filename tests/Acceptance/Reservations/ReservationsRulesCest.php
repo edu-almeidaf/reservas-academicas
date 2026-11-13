@@ -36,6 +36,8 @@ class ReservationsRulesCest extends BaseAcceptanceCest
         $this->studentId = $student->id;
         $this->otherUserId = $otherUser->id;
         $page->login('discente@utfpr.edu.br', '12345678');
+        // The subdivisions block makes the form taller than the default headless window
+        $page->resizeWindow(1280, 1200);
     }
 
     public function reservationScheduleConflictIsRejected(AcceptanceTester $page): void
