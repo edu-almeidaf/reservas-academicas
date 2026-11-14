@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\Resource;
 use App\Models\ResourceCategory;
 use App\Models\ResourceImage;
+use App\Models\Subdivision;
 use Core\Exceptions\HTTPException;
 use Core\Http\Controllers\Controller;
 use Core\Http\Request;
@@ -27,7 +28,10 @@ class ResourcesController extends Controller
         /** @var ResourceImage $newImage */
         $newImage = $resource->images()->new();
 
-        $this->render('resources/show', self::galleryData($resource, $newImage));
+        /** @var Subdivision $newSubdivision */
+        $newSubdivision = $resource->subdivisions()->new();
+
+        $this->render('resources/show', self::galleryData($resource, $newImage, $newSubdivision));
     }
 
     public function destroy(Request $request): void
@@ -55,14 +59,24 @@ class ResourcesController extends Controller
      *
      * @return array<string, mixed>
      */
-    public static function galleryData(Resource $resource, ResourceImage $newImage): array
+    public static function galleryData(Resource $resource, ResourceImage $newImage, Subdivision $newSubdivision): array
     {
         $category = $resource->category()->get();
         $images = $resource->images()->get();
+        $subdivisions = $resource->subdivisions()->get();
         $acceptedMimeTypes = ResourceImage::acceptedMimeTypes();
 
         $title = $resource->name;
-        return compact('resource', 'category', 'images', 'newImage', 'acceptedMimeTypes', 'title');
+        return compact(
+            'resource',
+            'category',
+            'images',
+            'newImage',
+            'subdivisions',
+            'newSubdivision',
+            'acceptedMimeTypes',
+            'title'
+        );
     }
 
     private function findResource(Request $request): Resource

@@ -70,4 +70,10 @@ Route::middleware('admin')->group(function () {
         ->name('resource_images.create');
     Route::delete('/resources/{resource_id}/images/{id}', [ResourceImagesController::class, 'destroy'])
         ->name('resource_images.destroy');
+
+    // Subdivisions
+    Route::post('/resources/{resource_id}/subdivisions', [SubdivisionsController::class, 'create'])
+        ->name('subdivisions.create');
+    Route::delete('/resources/{resource_id}/subdivisions/{id}', [SubdivisionsController::class, 'destroy'])
+        ->name('subdivisions.destroy');
 });
