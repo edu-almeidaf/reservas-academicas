@@ -4,6 +4,7 @@ namespace Tests\Integration\Access;
 
 use App\Models\Resource;
 use App\Models\ResourceCategory;
+use App\Models\Subdivision;
 use App\Models\User;
 use GuzzleHttp\Client;
 use GuzzleHttp\Cookie\CookieJar;
@@ -13,6 +14,11 @@ use Tests\TestCase;
 class SubdivisionsAccessTest extends TestCase
 {
     private const JSON_HEADERS = ['Accept' => 'application/json'];
+
+    private const AREAS = [
+        User::PROFILE_STUDENT => '/student',
+        User::PROFILE_TEACHER => '/teacher',
+    ];
 
     private Client $client;
 
@@ -51,7 +57,56 @@ class SubdivisionsAccessTest extends TestCase
     {
         return [
             'index' => ['GET', '/resources/1/subdivisions'],
+            'create' => ['POST', '/resources/1/subdivisions'],
+            'destroy' => ['DELETE', '/resources/1/subdivisions/1'],
         ];
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: string}>
+     */
+    public static function adminRoutesProvider(): array
+    {
+        return [
+            'create' => ['POST', '/resources/1/subdivisions'],
+            'destroy' => ['DELETE', '/resources/1/subdivisions/1'],
+        ];
+    }
+
+    #[DataProvider('adminRoutesProvider')]
+    public function test_should_not_access_the_route_if_not_admin(string $method, string $uri): void
+    {
+        foreach (self::AREAS as $profile => $ownArea) {
+            $response = $this->client->request($method, $uri, ['cookies' => $this->login($profile)]);
+
+            $this->assertEquals(302, $response->getStatusCode(), $profile);
+            $this->assertEquals($ownArea, $response->getHeaderLine('Location'), $profile);
+        }
+
+        $this->assertCount(1, Subdivision::all());
+    }
+
+    public function test_admin_should_create_the_subdivision(): void
+    {
+        $response = $this->client->post('/resources/1/subdivisions', [
+            'form_params' => ['subdivision[name]' => 'Bancada 2'],
+            'cookies' => $this->login(User::PROFILE_ADMIN),
+        ]);
+
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('/resources/1', $response->getHeaderLine('Location'));
+        $this->assertNotNull(Subdivision::findBy(['resource_id' => 1, 'name' => 'Bancada 2']));
+    }
+
+    public function test_admin_should_remove_the_subdivision(): void
+    {
+        $response = $this->client->delete('/resources/1/subdivisions/1', [
+            'cookies' => $this->login(User::PROFILE_ADMIN),
+        ]);
+
+        $this->assertEquals(302, $response->getStatusCode());
+        $this->assertEquals('/resources/1', $response->getHeaderLine('Location'));
+        $this->assertNull(Subdivision::findById(1));
     }
 
     #[DataProvider('authenticatedRoutesProvider')]
