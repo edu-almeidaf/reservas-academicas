@@ -86,9 +86,46 @@ conflitar com outra reserva `pendente` ou `deferido` do mesmo recurso.
 
 Além dos usuários, o populate cria:
 
-- as categorias de recurso e 12 recursos (2 inativos, que não aparecem no formulário);
+- as categorias de recurso e 12 recursos (2 inativos, que não aparecem no formulário), 3 deles com subdivisões;
 - as categorias de reserva;
 - 33 reservas futuras: 25 do discente (3 páginas na listagem, 2 delas já deferidas), 5 do docente e 3 do técnico.
+
+### Galeria de imagens dos recursos
+
+Só o técnico gerencia os recursos. Entre com `tecnico@utfpr.edu.br` e clique em **Recursos** (barra superior ou área
+administrativa), ou acesse [localhost/resources](http://localhost/resources). Na página de cada recurso é possível:
+
+- **Enviar** imagens JPEG ou PNG de até 2 MB, uma por vez. O tipo é conferido pelo conteúdo do arquivo, e o nome
+  gravado é gerado pelo sistema.
+- **Ver** as imagens já enviadas e **remover** uma delas (o registro e o arquivo).
+- **Remover o recurso** com todas as suas imagens, se ele nunca foi usado em reservas. Os recursos inativos
+  (`Laboratório de Eletrônica` e `Projetor Multimídia 2`) não têm reservas no populate.
+
+As galerias começam vazias. Os arquivos ficam em `public/assets/uploads/resources/{id do recurso}/`. A permissão de
+escrita nessa pasta é ajustada automaticamente quando os containers sobem.
+
+### Subdivisões das reservas
+
+Um recurso pode ter **subdivisões** (bancadas de um laboratório, palco e plateia de um auditório), e uma reserva pode
+usar só algumas delas em vez do recurso inteiro (relação N×N entre `reservations` e `subdivisions`, pela tabela
+`reservation_subdivision`).
+
+- **Escolher as subdivisões:** em **Nova Reserva** (ou ao editar uma reserva pendente), escolha o recurso. As
+  subdivisões ativas dele são carregadas por Ajax, sem recarregar a página, e aparecem como caixas de seleção. Sem
+  nenhuma marcada, a reserva é do **recurso inteiro**.
+- **Ver** as subdivisões na página da reserva e na coluna **Subdivisões** de **Minhas Reservas**, e **remover** uma
+  delas da reserva pendente (botão **Remover** na página da reserva, ou desmarcando na edição).
+- **Conflito de horário:** duas reservas do mesmo recurso no mesmo horário só conflitam se uma delas for do recurso
+  inteiro ou se as duas tiverem alguma subdivisão em comum.
+- **Gerenciar (técnico):** na página do recurso, em **Recursos**, o técnico cadastra e remove subdivisões. Uma
+  subdivisão já usada em reservas não pode ser removida.
+
+O populate cria 9 subdivisões no `Laboratório de Informática 1` (Bancada 1 a 4, a 4 inativa), no `Laboratório de
+Redes` (Bancada A, Bancada B e Rack de servidores) e no `Auditório Central` (Palco e Plateia). A `Bancada 1` e a
+`Bancada A` já têm reservas.
+
+Para ver a requisição Ajax, abra o DevTools do navegador (F12) na aba **Network**, filtre por **Fetch/XHR** e troque o
+recurso no formulário: a requisição `GET /resources/{id do recurso}/subdivisions` responde em JSON.
 
 ### Testes
 

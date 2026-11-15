@@ -49,8 +49,6 @@ class ResourceImagesControllerTest extends ControllerTestCase
         parent::tearDown();
     }
 
-    # The upload tests send a real file to the web container, that must be able to write in the upload directory:
-    # sudo chown -R www-data:www-data public/assets/uploads
     public function test_upload_image(): void
     {
         $response = $this->upload('resource_image.jpg');
