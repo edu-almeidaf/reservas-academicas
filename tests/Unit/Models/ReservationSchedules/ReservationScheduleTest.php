@@ -5,6 +5,7 @@ namespace Tests\Unit\Models\ReservationSchedules;
 use App\Models\Reservation;
 use App\Models\ReservationSchedule;
 use App\Models\Resource;
+use App\Models\Subdivision;
 use Tests\TestCase;
 use Tests\Unit\Models\Reservations\ReservationFixtures;
 
@@ -85,7 +86,7 @@ class ReservationScheduleTest extends TestCase
             $this->futureDate(),
             '08:00',
             '10:00',
-            $this->reservation->id
+            exceptReservationId: $this->reservation->id
         ));
     }
 
@@ -100,5 +101,76 @@ class ReservationScheduleTest extends TestCase
         $this->assertEquals($this->futureDate(), $schedules[$this->reservation->id]->scheduled_date);
         $this->assertEquals($this->futureDate(3), $schedules[$other->id]->scheduled_date);
         $this->assertSame([], ReservationSchedule::forReservations([]));
+    }
+
+    /**
+     * @return array<string, int> subdivision ids by name: "Bancada 1", "Bancada 2" and "Bancada 3"
+     */
+    private function createSubdivisions(): array
+    {
+        $ids = [];
+        foreach (['Bancada 1', 'Bancada 2', 'Bancada 3'] as $name) {
+            $subdivision = new Subdivision(['resource_id' => $this->resource->id, 'name' => $name]);
+            $subdivision->save();
+            $ids[$name] = $subdivision->id;
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @param int[] $subdivisionIds
+     */
+    private function hasConflictWith(array $subdivisionIds): bool
+    {
+        return ReservationSchedule::hasConflict(
+            $this->resource->id,
+            $this->futureDate(),
+            '08:00',
+            '10:00',
+            $subdivisionIds
+        );
+    }
+
+    public function test_whole_resource_conflicts_with_any_reservation(): void
+    {
+        $ids = $this->createSubdivisions();
+        $this->reservation->subdivision_ids = [$ids['Bancada 1']];
+        $this->reservation->save();
+
+        $this->assertTrue($this->hasConflictWith([]));
+    }
+
+    public function test_subdivisions_conflict_with_a_whole_resource_reservation(): void
+    {
+        $ids = $this->createSubdivisions();
+
+        $this->assertTrue($this->hasConflictWith([$ids['Bancada 1']]));
+    }
+
+    public function test_subdivisions_conflict_only_when_they_share_a_subdivision(): void
+    {
+        $ids = $this->createSubdivisions();
+        $this->reservation->subdivision_ids = [$ids['Bancada 1'], $ids['Bancada 2']];
+        $this->reservation->save();
+
+        $this->assertTrue($this->hasConflictWith([$ids['Bancada 2'], $ids['Bancada 3']]));
+        $this->assertFalse($this->hasConflictWith([$ids['Bancada 3']]));
+    }
+
+    public function test_the_reservation_itself_is_ignored_with_subdivisions(): void
+    {
+        $ids = $this->createSubdivisions();
+        $this->reservation->subdivision_ids = [$ids['Bancada 1']];
+        $this->reservation->save();
+
+        $this->assertFalse(ReservationSchedule::hasConflict(
+            $this->resource->id,
+            $this->futureDate(),
+            '08:00',
+            '10:00',
+            [$ids['Bancada 1']],
+            $this->reservation->id
+        ));
     }
 }

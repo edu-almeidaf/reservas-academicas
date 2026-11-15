@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Models\Resource;
 use App\Models\ResourceImage;
+use App\Models\Subdivision;
 use Core\Exceptions\HTTPException;
 use Core\Http\Controllers\Controller;
 use Core\Http\Request;
@@ -33,7 +34,10 @@ class ResourceImagesController extends Controller
         }
 
         FlashMessage::danger('Não foi possível enviar a imagem! Por favor, verifique!');
-        $this->render('resources/show', ResourcesController::galleryData($resource, $image));
+        /** @var Subdivision $newSubdivision */
+        $newSubdivision = $resource->subdivisions()->new();
+
+        $this->render('resources/show', ResourcesController::galleryData($resource, $image, $newSubdivision));
     }
 
     public function destroy(Request $request): void

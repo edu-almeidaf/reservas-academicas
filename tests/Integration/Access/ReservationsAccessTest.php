@@ -53,6 +53,7 @@ class ReservationsAccessTest extends TestCase
             'edit' => ['GET', '/reservations/1/edit'],
             'update' => ['PUT', '/reservations/1'],
             'destroy' => ['DELETE', '/reservations/1'],
+            'subdivisions.destroy' => ['DELETE', '/reservations/1/subdivisions/1'],
         ];
     }
 

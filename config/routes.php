@@ -4,9 +4,11 @@ use App\Controllers\AdminController;
 use App\Controllers\AuthenticationsController;
 use App\Controllers\HomeController;
 use App\Controllers\ReservationsController;
+use App\Controllers\ReservationSubdivisionsController;
 use App\Controllers\ResourceImagesController;
 use App\Controllers\ResourcesController;
 use App\Controllers\StudentController;
+use App\Controllers\SubdivisionsController;
 use App\Controllers\TeacherController;
 use App\Controllers\UsersController;
 use Core\Router\Route;
@@ -34,6 +36,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/reservations/{id}/edit', [ReservationsController::class, 'edit'])->name('reservations.edit');
     Route::put('/reservations/{id}', [ReservationsController::class, 'update'])->name('reservations.update');
     Route::delete('/reservations/{id}', [ReservationsController::class, 'destroy'])->name('reservations.destroy');
+
+    // Reservation subdivisions
+    Route::delete(
+        '/reservations/{reservation_id}/subdivisions/{id}',
+        [ReservationSubdivisionsController::class, 'destroy']
+    )->name('reservation_subdivisions.destroy');
+
+    // Subdivisions
+    Route::get('/resources/{resource_id}/subdivisions', [SubdivisionsController::class, 'index'])
+        ->name('subdivisions.index');
 });
 
 // Areas
@@ -58,4 +70,10 @@ Route::middleware('admin')->group(function () {
         ->name('resource_images.create');
     Route::delete('/resources/{resource_id}/images/{id}', [ResourceImagesController::class, 'destroy'])
         ->name('resource_images.destroy');
+
+    // Subdivisions
+    Route::post('/resources/{resource_id}/subdivisions', [SubdivisionsController::class, 'create'])
+        ->name('subdivisions.create');
+    Route::delete('/resources/{resource_id}/subdivisions/{id}', [SubdivisionsController::class, 'destroy'])
+        ->name('subdivisions.destroy');
 });
