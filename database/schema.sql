@@ -121,13 +121,14 @@ CREATE TABLE reservation_schedules (
 ) ENGINE=InnoDB;
 
 CREATE TABLE reservation_subdivision (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     reservation_id INT NOT NULL,
     subdivision_id INT NOT NULL,
-    PRIMARY KEY (reservation_id, subdivision_id),
+    UNIQUE KEY uq_reservation_subdivision (reservation_id, subdivision_id),
     KEY idx_reservation_subdivision_subdivision (subdivision_id),
     CONSTRAINT fk_reservation_subdivision_reservation
         FOREIGN KEY (reservation_id) REFERENCES reservations (id)
-        ON DELETE RESTRICT ON UPDATE RESTRICT,
+        ON DELETE CASCADE ON UPDATE RESTRICT,
     CONSTRAINT fk_reservation_subdivision_subdivision
         FOREIGN KEY (subdivision_id) REFERENCES subdivisions (id)
         ON DELETE RESTRICT ON UPDATE RESTRICT

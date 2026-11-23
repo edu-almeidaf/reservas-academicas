@@ -10,6 +10,7 @@
             <tr>
                 <th>#</th>
                 <th>Recurso</th>
+                <th>Subdivisões</th>
                 <th>Data</th>
                 <th>Horário</th>
                 <th>Status</th>
@@ -24,6 +25,7 @@
                         <a href="<?= route('reservations.show', ['id' => $reservation->id]) ?>">#<?= $reservation->id ?></a>
                     </td>
                     <td><?= htmlspecialchars($resources[$reservation->resource_id] ?? '') ?></td>
+                    <td><?= htmlspecialchars(implode(', ', $subdivisionNames[$reservation->id] ?? ['Recurso inteiro'])) ?></td>
                     <td><?= $schedule ? date('d/m/Y', strtotime($schedule->scheduled_date)) : '' ?></td>
                     <td>
                         <?= $schedule ? substr($schedule->start_time, 0, 5) . ' - ' . substr($schedule->end_time, 0, 5) : '' ?>

@@ -44,6 +44,49 @@
     <button type="submit" class="btn btn-primary">Enviar imagem</button>
 </form>
 
+<h2 class="h4">Subdivisões</h2>
+
+<?php if (empty($subdivisions)) : ?>
+    <p>Nenhuma subdivisão cadastrada.</p>
+<?php else : ?>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Situação</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($subdivisions as $subdivision) : ?>
+                <tr>
+                    <td><?= htmlspecialchars($subdivision->name) ?></td>
+                    <td><?= $subdivision->statusLabel() ?></td>
+                    <td>
+                        <?php $destroyParams = ['resource_id' => $resource->id, 'id' => $subdivision->id]; ?>
+                        <form action="<?= route('subdivisions.destroy', $destroyParams) ?>"
+                            method="POST" class="m-0" onsubmit="return confirm('Deseja remover esta subdivisão?')">
+                            <input type="hidden" name="_method" value="DELETE">
+                            <button type="submit" class="btn btn-link text-danger p-0">Remover</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+<?php endif; ?>
+
+<form action="<?= route('subdivisions.create', ['resource_id' => $resource->id]) ?>" method="POST" class="mb-3" novalidate>
+    <div class="form-group mb-3">
+        <label for="subdivision_name" class="form-label">Nova subdivisão</label>
+        <input id="subdivision_name" type="text" name="subdivision[name]"
+            value="<?= htmlspecialchars($newSubdivision->name ?? '') ?>"
+            class="form-control <?= $newSubdivision->errors('name') ? 'is-invalid' : '' ?>">
+        <div class="invalid-feedback"><?= $newSubdivision->errors('name') ?></div>
+    </div>
+    <button type="submit" class="btn btn-primary">Cadastrar subdivisão</button>
+</form>
+
 <div class="d-flex gap-2">
     <a href="<?= route('resources.index') ?>" class="btn btn-outline-secondary">Voltar</a>
     <form action="<?= route('resources.destroy', ['id' => $resource->id]) ?>" method="POST" class="m-0"

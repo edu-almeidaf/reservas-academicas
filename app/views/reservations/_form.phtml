@@ -12,6 +12,16 @@
     <div class="invalid-feedback"><?= $reservation->errors('resource_id') ?></div>
 </div>
 
+<fieldset class="form-group mb-3" id="reservation_subdivisions"
+    data-url-template="<?= route('subdivisions.index', ['resource_id' => '__resource_id__']) ?>"
+    data-selected="<?= htmlspecialchars(json_encode($reservation->subdivision_ids ?? [])) ?>">
+    <legend class="form-label fs-6">Subdivisões</legend>
+    <div data-subdivisions-list class="<?= $reservation->errors('subdivision_ids') ? 'is-invalid' : '' ?>"></div>
+    <div class="invalid-feedback"><?= $reservation->errors('subdivision_ids') ?></div>
+    <div class="form-text">Sem nenhuma marcada, a reserva é do recurso inteiro.</div>
+</fieldset>
+<script src="/assets/js/reservation_subdivisions.js" defer></script>
+
 <div class="form-group mb-3">
     <label for="reservation_reservation_category_id" class="form-label">Categoria</label>
     <select id="reservation_reservation_category_id" name="reservation[reservation_category_id]"

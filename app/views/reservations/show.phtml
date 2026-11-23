@@ -4,6 +4,32 @@
             <dt class="col-sm-3">Recurso</dt>
             <dd class="col-sm-9"><?= htmlspecialchars($reservation->resource->name) ?></dd>
 
+            <dt class="col-sm-3">Subdivisões</dt>
+            <dd class="col-sm-9">
+                <?php if (empty($subdivisions)) : ?>
+                    Recurso inteiro
+                <?php else : ?>
+                    <ul class="list-unstyled mb-0">
+                        <?php foreach ($subdivisions as $subdivision) : ?>
+                            <li class="d-flex gap-2 align-items-center">
+                                <?= htmlspecialchars($subdivision->name) ?>
+                                <?php if ($reservation->isPending()) : ?>
+                                    <?php $removeUrl = route(
+                                        'reservation_subdivisions.destroy',
+                                        ['reservation_id' => $reservation->id, 'id' => $subdivision->id]
+                                    ) ?>
+                                    <form action="<?= $removeUrl ?>" method="POST" class="m-0"
+                                          onsubmit="return confirm('Deseja remover esta subdivisão da reserva?')">
+                                        <input type="hidden" name="_method" value="DELETE">
+                                        <button type="submit" class="btn btn-link btn-sm p-0">Remover</button>
+                                    </form>
+                                <?php endif; ?>
+                            </li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+            </dd>
+
             <dt class="col-sm-3">Categoria</dt>
             <dd class="col-sm-9"><?= htmlspecialchars($reservation->category->name) ?></dd>
 

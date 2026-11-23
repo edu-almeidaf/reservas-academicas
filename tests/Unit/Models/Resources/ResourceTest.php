@@ -7,6 +7,7 @@ use App\Models\ReservationCategory;
 use App\Models\Resource;
 use App\Models\ResourceCategory;
 use App\Models\ResourceImage;
+use App\Models\Subdivision;
 use App\Models\User;
 use App\Services\ResourceGallery;
 use Tests\TestCase;
@@ -188,5 +189,32 @@ class ResourceTest extends TestCase
         $this->assertTrue($reservation->save());
 
         $this->assertTrue($this->resource->hasReservations());
+    }
+
+    public function test_subdivisions_should_return_only_the_resource_subdivisions(): void
+    {
+        $other = $this->newResource(['name' => 'Laboratório 2']);
+        $other->save();
+
+        foreach ([[$this->resource, 'Bancada 1'], [$other, 'Bancada 2']] as [$resource, $name]) {
+            $subdivision = $resource->subdivisions()->new(['name' => $name]);
+            $subdivision->save();
+        }
+
+        $subdivisions = $this->resource->subdivisions()->get();
+
+        $this->assertCount(1, $subdivisions);
+        $this->assertInstanceOf(Subdivision::class, $subdivisions[0]);
+        $this->assertEquals('Bancada 1', $subdivisions[0]->name);
+    }
+
+    public function test_active_subdivision_options_should_return_only_active_ordered_by_name(): void
+    {
+        foreach ([['Rack', 1], ['Bancada B', 1], ['Bancada A', 1], ['Bancada C', 0]] as [$name, $active]) {
+            $subdivision = $this->resource->subdivisions()->new(['name' => $name, 'active' => $active]);
+            $subdivision->save();
+        }
+
+        $this->assertSame(['Bancada A', 'Bancada B', 'Rack'], array_values($this->resource->activeSubdivisionOptions()));
     }
 }
